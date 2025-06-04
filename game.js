@@ -1,5 +1,5 @@
 // 環境変数
-const fps = 1;
+const fps = 30;
 
 /*色とミノの形のメモ
 
@@ -80,22 +80,63 @@ class Playable {
     }
 }
 
-// blockのx軸(入力された左右)の動き
-class MoveX {
+// // blockのx軸(入力された左右)の動き
+// class MoveX {
+//     /**
+//      * @param {Playable} block 移動中のblock
+//      * @param {number} dx x軸上の移動
+//      */
+//     constructor(block, dx) {
+//         this.block = block
+//         this.dx = dx
+//         // この下4つは仮の値
+//         this.beginX = -1
+//         this.endX = -1
+//         this.frame = 0
+//     }
+
+//     exec() {
+//         if (this.done) return this.done
+//         this.frame++
+//         if (this.frame === 1) {
+//             this.beginX = this.block.x
+//             this.endX = this.block.x + this.dx
+//         }
+//         this.block.x = this.beginX + this.frame * this.dx / fps
+//         return this.done;
+//     }
+
+//     /*
+//     // 1フレームずつblockを移動させる
+//     exec() {
+//         if (this.done) return this.done
+//         this.frame++
+//         if (this.frame === 1) {
+//             this.beginX = this.block.x
+//             this.endX = this.block.x + this.dx
+//         }
+//         this.block.x = this.beginX + this.frame * this.dx / fps
+//         return this.done;
+//     }
+//     */
+
+//     /**
+//      * @returns {boolean} コマンドが終了していればtrue、実行中ならfalse
+//      */
+//     get done() {
+//         return this.frame >= fps
+//     }
+// }
+
+// blockのy軸(自然落下)の動き
+class MoveY {
     /**
      * @param {Playable} block 移動中のblock
-     * @param {number} dx x軸上の移動
      */
-    constructor(block, dx) {
+    constructor(block) {
         this.block = block
-        this.dx = dx
-        // y軸は落下するため-1固定
-        // →そのうちxとyの動きを別で管理するかも？
         this.dy = 1
-        // この下4つは仮の値
-        this.beginX = -1
         this.beginY = -1
-        this.endX = -1
         this.endY = -1
         this.frame = 0
     }
@@ -105,30 +146,20 @@ class MoveX {
         if (this.done) return this.done
         this.frame++
         if (this.frame === 1) {
-            this.beginX = this.block.x
             this.beginY = this.block.y
-            this.endX = this.block.x + this.dx
-            this.endY = this.block.y-1
+            this.endY = this.block.y + this.dy
         }
-        this.block.x = this.beginX + this.frame * this.dx / fps
         this.block.y = this.beginY + this.frame * this.dy / fps
         return this.done;
-    }
-
-    /**
-     * @returns {boolean} コマンドが終了していればtrue、実行中ならfalse
-     */
-    get done() {
-        return this.frame >= fps
     }
 }
 
 // gameの初期設定
 class Game {
     constructor() {
-        this.map=new Map()
+        this.map = new Map()
         this.block = null
-        this.blocks=[]
+        this.blocks = []
         // ↑これいらなさそうなので後に消しておきます
         this.commands = []
     }
@@ -138,7 +169,7 @@ let game
 window.onload = function () {
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    game.playable = new Playable(4,0, Math.floor(Math.random()*7+1))
+    game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
 }
 
 // 1フレームごとに描写する
@@ -154,18 +185,33 @@ const draw = function () {
         ctx.fillStyle = "orange";
         ctx.fillRect(0, 0, 500, 750);
 
+        /*
         // A,Dが押されたら左右に移動
         if (game.commands.length === 0) {
             document.addEventListener("keydown", (event) => {
-                console.log(`keydown:${event.code}`)
-                console.log(game.commands)
-                let move = { KeyA: -1, KeyD: 1};
+                let move = { KeyA: -1, KeyD: 1 };
                 let dx = move[event.code];
                 if (dx !== undefined) {
-                    game.commands.push(new Move(game.playable, dx));
+                    game.commands.push(new MoveX(game.playable, dx));
                 }
             });
         }
+        */
+
+        // x軸方向に瞬時に移動
+        if (game.commands.length === 0) {
+            document.addEventListener("keydown", (event) => {
+                let move = { KeyA: -1, KeyD: 1 };
+                let dx = move[event.code];
+                if (dx !== undefined) {
+                    game.playable.x = game.playable.x + dx
+                }
+
+            });
+        }
+
+        // y軸に常に移動
+        game.commands.push(new MoveY(game.playable))
 
         // blockを動かす行為を毎フレーム実行
         for (let c of game.commands) {
@@ -176,7 +222,7 @@ const draw = function () {
         // 既に設置したblockを描写→ifは後で直します
         for (let y = 0; y < game.map.lengthY; y++) {
             for (let x = 0; x < game.map.lengthX; x++) {
-                let tileColors=[
+                let tileColors = [
                     null, // 後に透明のblockを描写することになるかも？
                     "red",
                     "blue",
@@ -185,8 +231,8 @@ const draw = function () {
                     "purple"
                 ]
                 // ぷよの色となる部分→後でMapのclassに入れておきます
-                let color=tileColors[game.map.tileAt(x, y)]
-                if(color!==null){
+                let color = tileColors[game.map.tileAt(x, y)]
+                if (color !== null) {
                     ctx.fillStyle = color
                     ctx.fillRect(
                         x * width,
@@ -194,7 +240,7 @@ const draw = function () {
                         width,
                         width
                     )
-                }   
+                }
             }
         }
 
