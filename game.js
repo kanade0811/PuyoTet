@@ -1,5 +1,5 @@
 // 環境変数
-const fps = 30;
+const fps = 1;
 
 /*色とミノの形のメモ
 
@@ -57,7 +57,7 @@ class Map {
 }
 
 // 落下中のblock
-class Block {
+class Playable {
     /**
     * @param {number} x blockの初期X
     * @param {number} y blockの初期Y
@@ -80,9 +80,10 @@ class Block {
     }
 }
 
-class Move {
+// blockのx軸(入力された左右)の動き
+class MoveX {
     /**
-     * @param {Block} block 移動させたいblock
+     * @param {Playable} block 移動中のblock
      * @param {number} dx x軸上の移動
      */
     constructor(block, dx) {
@@ -90,7 +91,7 @@ class Move {
         this.dx = dx
         // y軸は落下するため-1固定
         // →そのうちxとyの動きを別で管理するかも？
-        this.dy = -1
+        this.dy = 1
         // この下4つは仮の値
         this.beginX = -1
         this.beginY = -1
@@ -137,8 +138,7 @@ let game
 window.onload = function () {
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    let block = new Block(4,0, Math.floor(Math.random()*7+1))
-    game.block = block
+    game.playable = new Playable(4,0, Math.floor(Math.random()*7+1))
 }
 
 // 1フレームごとに描写する
@@ -158,10 +158,11 @@ const draw = function () {
         if (game.commands.length === 0) {
             document.addEventListener("keydown", (event) => {
                 console.log(`keydown:${event.code}`)
+                console.log(game.commands)
                 let move = { KeyA: -1, KeyD: 1};
                 let dx = move[event.code];
                 if (dx !== undefined) {
-                    game.commands.push(new Move(game.block, dx));
+                    game.commands.push(new Move(game.playable, dx));
                 }
             });
         }
@@ -175,63 +176,34 @@ const draw = function () {
         // 既に設置したblockを描写→ifは後で直します
         for (let y = 0; y < game.map.lengthY; y++) {
             for (let x = 0; x < game.map.lengthX; x++) {
-                let tile = game.map.tileAt(x, y)
-                if (tile === 1) {
-                    ctx.fillStyle = "red"
+                let tileColors=[
+                    null, // 後に透明のblockを描写することになるかも？
+                    "red",
+                    "blue",
+                    "yellow",
+                    "green",
+                    "purple"
+                ]
+                // ぷよの色となる部分→後でMapのclassに入れておきます
+                let color=tileColors[game.map.tileAt(x, y)]
+                if(color!==null){
+                    ctx.fillStyle = color
                     ctx.fillRect(
-                        this.x * width,
-                        this.y * width,
+                        x * width,
+                        y * width,
                         width,
                         width
                     )
-                }
-                if (tile === 2) {
-                    ctx.fillStyle = "blue"
-                    ctx.fillRect(
-                        this.x * width,
-                        this.y * width,
-                        width,
-                        width
-                    )
-                }
-                if (tile === 3) {
-                    ctx.fillStyle = "yellow"
-                    ctx.fillRect(
-                        this.x * width,
-                        this.y * width,
-                        width,
-                        width
-                    )
-                }
-                if (tile === 4) {
-                    ctx.fillStyle = "green"
-                    ctx.fillRect(
-                        this.x * width,
-                        this.y * width,
-                        width,
-                        width
-                    )
-                }
-                if (tile === 5) {
-                    ctx.fillStyle = "purple"
-                    ctx.fillRect(
-                        this.x * width,
-                        this.y * width,
-                        width,
-                        width
-                    )
-                }
+                }   
             }
         }
 
         // 今動かしているblockを描写
-        game.block.draw(ctx, width)
-        // for (let k of game.block) {
-        //     k.draw(ctx, width)
-        // }
+        game.playable.draw(ctx, width)
+
     } else { // 描画に関係ない部分をこの中に
 
     }
 }
 
-setInterval(draw, 1000 / fps);
+setInterval(draw, 1000 / fps)
