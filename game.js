@@ -143,54 +143,67 @@ const draw = function () {
     // canvasの作成
     const canvas = document.getElementById("canvas")
     const ctx = canvas.getContext("2d")
+    const width=50
 
-    // 描写はifの中に
-    if (canvas.getContext) {
-        let width = 50
-        // 背景色
-        ctx.fillStyle = "orange";
-        ctx.fillRect(0, 0, 500, 750);
-
-        // y軸に常に移動
-        game.commands.push(new Gravity(game.playable))
-
-        // blockを動かす行為を毎フレーム実行
-        for (let c of game.commands) {
-            c.exec();
-        }
-        game.commands = game.commands.filter(c => !c.done)
-
-        // 既に設置したblockを描写
-        for (let y = 0; y < game.map.lengthY; y++) {
-            for (let x = 0; x < game.map.lengthX; x++) {
-                let tileColors = [
-                    null, // 後に透明のblockを描写することになるかも？
-                    "red",
-                    "blue",
-                    "yellow",
-                    "green",
-                    "purple"
-                ]
-                // tileColors=ぷよの色となる部分→後でMapのclassに入れておきます
-                let color = tileColors[game.map.tileAt(x, y)]
-                if (color !== null) {
-                    ctx.fillStyle = color
-                    ctx.fillRect(
-                        x * width,
-                        y * width,
-                        width,
-                        width
-                    )
-                }
-            }
-        }
-
-        // 今動かしているblockを描写
-        game.playable.draw(ctx, width)
-
-    } else { // 描画に関係ない部分をこの中に
-
-    }
+    drawBack(ctx,width)
+    drawBlocks(ctx,width)
+    movePlayable()
+    game.playable.draw(ctx, width)  // 今動かしているblockを描写
 }
 
 setInterval(draw, 1000 / fps)
+
+// 背景の描写
+function drawBack(ctx,width){
+    // 背景色
+    ctx.fillStyle = "orange";
+    ctx.fillRect(0, 0, 500, 750);
+
+    // マス目→見にくい気がしたんで消します
+    /*
+    for(let y=0;y<game.map.lengthY;y++){
+        for(let x=0;x<game.map.lengthX;x++){
+            ctx.strokeRect(width*x,width*y,width,width)
+        }
+    }
+    */
+}
+
+// 既に積んでいるblockの描写
+function drawBlocks(ctx,width){
+    // 既に設置したblockを描写
+    for (let y = 0; y < game.map.lengthY; y++) {
+        for (let x = 0; x < game.map.lengthX; x++) {
+            // tileColors=ぷよの色となる部分→後でMapのclassに入れておきます
+            let tileColors = [
+                null, // 後に透明のblockを描写することになるかも？
+                "red",
+                "blue",
+                "yellow",
+                "green",
+                "purple"
+            ]
+            let color = tileColors[game.map.tileAt(x, y)]
+            if (color !== null) {
+                ctx.fillStyle = color
+                ctx.fillRect(
+                    x * width,
+                    y * width,
+                    width,
+                    width
+                )
+            }
+        }
+    }
+}
+
+// 落下物の処理→そのうち簡潔に書き直します
+function movePlayable(){
+    // y軸に常に移動
+    game.commands.push(new Gravity(game.playable))
+    // blockを動かす行為を毎フレーム実行
+    for (let c of game.commands) {
+        c.exec();
+    }
+    game.commands = game.commands.filter(c => !c.done)
+}
