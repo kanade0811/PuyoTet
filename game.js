@@ -202,9 +202,12 @@ const draw = function () {
         if (game.commands.length === 0) {
             document.addEventListener("keydown", (event) => {
                 let move = { KeyA: -1, KeyD: 1 };
+                console.log(`keydown:${event.code}`)
                 let dx = move[event.code];
                 if (dx !== undefined) {
-                    game.playable.x = game.playable.x + dx
+                    let nextX = game.playable.x + dx
+                    if (0 <= nextX && nextX < game.map.lengthX)
+                        game.playable.x = nextX
                 }
 
             });
