@@ -80,56 +80,8 @@ class Playable {
     }
 }
 
-// // blockのx軸(入力された左右)の動き
-// class MoveX {
-//     /**
-//      * @param {Playable} block 移動中のblock
-//      * @param {number} dx x軸上の移動
-//      */
-//     constructor(block, dx) {
-//         this.block = block
-//         this.dx = dx
-//         // この下4つは仮の値
-//         this.beginX = -1
-//         this.endX = -1
-//         this.frame = 0
-//     }
-
-//     exec() {
-//         if (this.done) return this.done
-//         this.frame++
-//         if (this.frame === 1) {
-//             this.beginX = this.block.x
-//             this.endX = this.block.x + this.dx
-//         }
-//         this.block.x = this.beginX + this.frame * this.dx / fps
-//         return this.done;
-//     }
-
-//     /*
-//     // 1フレームずつblockを移動させる
-//     exec() {
-//         if (this.done) return this.done
-//         this.frame++
-//         if (this.frame === 1) {
-//             this.beginX = this.block.x
-//             this.endX = this.block.x + this.dx
-//         }
-//         this.block.x = this.beginX + this.frame * this.dx / fps
-//         return this.done;
-//     }
-//     */
-
-//     /**
-//      * @returns {boolean} コマンドが終了していればtrue、実行中ならfalse
-//      */
-//     get done() {
-//         return this.frame >= fps
-//     }
-// }
-
 // blockのy軸(自然落下)の動き
-class MoveY {
+class Gravity {
     /**
      * @param {Playable} block 移動中のblock
      */
@@ -167,9 +119,23 @@ class Game {
 let game
 
 window.onload = function () {
+
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
     game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+
+    // 左右が押されたら瞬時に移動
+    document.addEventListener("keydown", (event) => {
+        if(game.commands.length===0) return;
+        let move = { KeyA: -1, KeyD: 1 };
+        let dx = move[event.code];
+        if (dx !== undefined) {
+            let nextX = game.playable.x + dx
+            // 移動先が枠内だったときのみ移動を実行
+            if (0 <= nextX && nextX < game.map.lengthX)
+                game.playable.x = nextX
+        }
+    });
 }
 
 // 1フレームごとに描写する
@@ -185,36 +151,8 @@ const draw = function () {
         ctx.fillStyle = "orange";
         ctx.fillRect(0, 0, 500, 750);
 
-        /*
-        // A,Dが押されたら左右に移動
-        if (game.commands.length === 0) {
-            document.addEventListener("keydown", (event) => {
-                let move = { KeyA: -1, KeyD: 1 };
-                let dx = move[event.code];
-                if (dx !== undefined) {
-                    game.commands.push(new MoveX(game.playable, dx));
-                }
-            });
-        }
-        */
-
-        // x軸方向に瞬時に移動
-        if (game.commands.length === 0) {
-            document.addEventListener("keydown", (event) => {
-                let move = { KeyA: -1, KeyD: 1 };
-                console.log(`keydown:${event.code}`)
-                let dx = move[event.code];
-                if (dx !== undefined) {
-                    let nextX = game.playable.x + dx
-                    if (0 <= nextX && nextX < game.map.lengthX)
-                        game.playable.x = nextX
-                }
-
-            });
-        }
-
         // y軸に常に移動
-        game.commands.push(new MoveY(game.playable))
+        game.commands.push(new Gravity(game.playable))
 
         // blockを動かす行為を毎フレーム実行
         for (let c of game.commands) {
@@ -222,7 +160,7 @@ const draw = function () {
         }
         game.commands = game.commands.filter(c => !c.done)
 
-        // 既に設置したblockを描写→ifは後で直します
+        // 既に設置したblockを描写
         for (let y = 0; y < game.map.lengthY; y++) {
             for (let x = 0; x < game.map.lengthX; x++) {
                 let tileColors = [
@@ -233,7 +171,7 @@ const draw = function () {
                     "green",
                     "purple"
                 ]
-                // ぷよの色となる部分→後でMapのclassに入れておきます
+                // tileColors=ぷよの色となる部分→後でMapのclassに入れておきます
                 let color = tileColors[game.map.tileAt(x, y)]
                 if (color !== null) {
                     ctx.fillStyle = color
