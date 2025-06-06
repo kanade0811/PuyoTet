@@ -1,5 +1,6 @@
 // 環境変数
-const fps = 30;
+const fps = 30
+const width=50
 
 /*色とミノの形のメモ
 
@@ -48,11 +49,28 @@ class Map {
         ]
         this.lengthX = 10
         this.lengthY = 15
+
+        this.tileColors=[
+                null,
+                "red",
+                "blue",
+                "yellow",
+                "green",
+                "purple",
+                "black" // 落下物に色を付ける前の仮の色
+            ]
+    }
+
+    // 座標(x,y)を配列の番号に変換
+    tileNumber(x,y){
+        if (x < 0 || this.lengthX <= x || y < 0 || this.lengthY <= y){
+            throw new Error("存在しないタイル")
+        }
+        return (y * this.lengthX + x)
     }
     // 座標(x,y)を配列の何番目かに変換
     tileAt(x, y) {
-        if (x < 0 || this.lengthX <= x || y < 0 || this.lengthY <= y) return 1;
-        return this.tiles[y * this.lengthX + x];
+        return this.tiles[this.tileNumber(x,y)]
     }
 }
 
@@ -68,7 +86,7 @@ class Playable {
         this.y = y;
         // ここにblockの種類を追加
     }
-    draw(ctx, width) {
+    draw(ctx) {
         // 後にここでblockの色を指定
         ctx.fillStyle = "black"
         ctx.fillRect(
@@ -80,39 +98,11 @@ class Playable {
     }
 }
 
-// blockのy軸(自然落下)の動き
-class Gravity {
-    /**
-     * @param {Playable} block 移動中のblock
-     */
-    constructor(block) {
-        this.block = block
-        this.dy = 1
-        this.beginY = -1
-        this.endY = -1
-        this.frame = 0
-    }
-
-    // 1フレームずつblockを移動させる
-    exec() {
-        if (this.done) return this.done
-        this.frame++
-        if (this.frame === 1) {
-            this.beginY = this.block.y
-            this.endY = this.block.y + this.dy
-        }
-        this.block.y = this.beginY + this.frame * this.dy / fps
-        return this.done;
-    }
-}
-
 // gameの初期設定
 class Game {
     constructor() {
         this.map = new Map()
-        this.block = null
-        this.blocks = []
-        // ↑これいらなさそうなので後に消しておきます
+        this.playable = null
         this.commands = []
     }
 }
@@ -139,51 +129,37 @@ window.onload = function () {
 }
 
 // 1フレームごとに描写する
-const draw = function () {
+setInterval(draw, 1000 / fps)
+function draw() {
     // canvasの作成
     const canvas = document.getElementById("canvas")
     const ctx = canvas.getContext("2d")
-    const width=50
 
-    drawBack(ctx,width)
-    drawBlocks(ctx,width)
-    movePlayable()
-    game.playable.draw(ctx, width)  // 今動かしているblockを描写
+    drawBack(ctx)
+    drawBlocks(ctx)
+    drawPlayable(ctx)
 }
 
-setInterval(draw, 1000 / fps)
-
 // 背景の描写
-function drawBack(ctx,width){
+function drawBack(ctx){
     // 背景色
     ctx.fillStyle = "orange";
     ctx.fillRect(0, 0, 500, 750);
 
-    // マス目→見にくい気がしたんで消します
-    /*
+    // マス目→見にくい気がする
     for(let y=0;y<game.map.lengthY;y++){
         for(let x=0;x<game.map.lengthX;x++){
             ctx.strokeRect(width*x,width*y,width,width)
         }
     }
-    */
 }
 
 // 既に積んでいるblockの描写
-function drawBlocks(ctx,width){
+function drawBlocks(ctx){
     // 既に設置したblockを描写
     for (let y = 0; y < game.map.lengthY; y++) {
         for (let x = 0; x < game.map.lengthX; x++) {
-            // tileColors=ぷよの色となる部分→後でMapのclassに入れておきます
-            let tileColors = [
-                null, // 後に透明のblockを描写することになるかも？
-                "red",
-                "blue",
-                "yellow",
-                "green",
-                "purple"
-            ]
-            let color = tileColors[game.map.tileAt(x, y)]
+            let color = game.map.tileColors[game.map.tileAt(x, y)]
             if (color !== null) {
                 ctx.fillStyle = color
                 ctx.fillRect(
@@ -198,12 +174,7 @@ function drawBlocks(ctx,width){
 }
 
 // 落下物の処理→そのうち簡潔に書き直します
-function movePlayable(){
-    // y軸に常に移動
-    game.commands.push(new Gravity(game.playable))
-    // blockを動かす行為を毎フレーム実行
-    for (let c of game.commands) {
-        c.exec();
-    }
-    game.commands = game.commands.filter(c => !c.done)
+function drawPlayable(ctx){
+    game.playable.y+=1/fps  // y軸に常に移動
+    game.playable.draw(ctx)  // 今動かしているblockを描写
 }
