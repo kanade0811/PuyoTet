@@ -64,6 +64,7 @@ class Map {
     // 座標(x,y)を配列の番号に変換
     tileNumber(x,y){
         if (x < 0 || this.lengthX <= x || y < 0 || this.lengthY <= y){
+            console.log(x,y)
             throw new Error("存在しないタイル")
         }
         return (y * this.lengthX + x)
@@ -85,10 +86,11 @@ class Playable {
         this.x = x;
         this.y = y;
         // ここにblockの種類を追加
+        this.color=6    // 仮として黒固定
     }
     draw(ctx) {
         // 後にここでblockの色を指定
-        ctx.fillStyle = "black"
+        ctx.fillStyle = game.map.tileColors[this.color]
         ctx.fillRect(
             this.x * width,
             this.y * width,
@@ -103,7 +105,6 @@ class Game {
     constructor() {
         this.map = new Map()
         this.playable = null
-        this.commands = []
     }
 }
 let game
@@ -116,7 +117,6 @@ window.onload = function () {
 
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
-        if(game.commands.length===0) return;
         let move = { KeyA: -1, KeyD: 1 };
         let dx = move[event.code];
         if (dx !== undefined) {
@@ -138,6 +138,7 @@ function draw() {
     drawBack(ctx)
     drawBlocks(ctx)
     drawPlayable(ctx)
+    drawPut()
 }
 
 // 背景の描写
@@ -152,6 +153,26 @@ function drawBack(ctx){
             ctx.strokeRect(width*x,width*y,width,width)
         }
     }
+}
+
+function drawPut(){
+    if(!game.playable) return;
+    let x=game.playable.x
+    let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
+    if(y+1>=game.map.lengthY){
+        put(x,y)
+        return
+    }else{
+        if(game.map.tileAt(x,y+1)!==0){
+            pt(x,y)
+        }
+    }
+}
+
+function put(x,y){
+    game.map.tiles[game.map.tileNumber(x,y)]=game.playable.color
+    game.playable=null
+    game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
 }
 
 // 既に積んでいるblockの描写
@@ -173,8 +194,8 @@ function drawBlocks(ctx){
     }
 }
 
-// 落下物の処理→そのうち簡潔に書き直します
+// 落下物の処理
 function drawPlayable(ctx){
-    game.playable.y+=1/fps  // y軸に常に移動
+    game.playable.y+=3/fps  // y軸に常に移動、3は仮の値(落下時の処理を見たかったため早めに設定)
     game.playable.draw(ctx)  // 今動かしているblockを描写
 }
