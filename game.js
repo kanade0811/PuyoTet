@@ -2,31 +2,6 @@
 const fps = 30
 const width=50
 
-/*色とミノの形のメモ
-
-red blue yellow green purple
-
-1111
-
-11
-11
-
-010
-111
-
-1
-111
-
-001
-111
-
-011
-110
-
-110
-011
-*/
-
 // 盤面をここに保存
 class Map {
     constructor() {
@@ -155,6 +130,7 @@ function drawBack(ctx){
     }
 }
 
+// 設置するかどうかの判定
 function drawPut(){
     if(!game.playable) return;
     let x=game.playable.x
@@ -169,6 +145,7 @@ function drawPut(){
     }
 }
 
+// 設置処理
 function put(x,y){
     game.map.tiles[game.map.tileNumber(x,y)]=game.playable.color
     game.playable=null
