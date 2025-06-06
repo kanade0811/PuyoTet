@@ -114,11 +114,10 @@ function draw() {
     drawBack(ctx)
     drawBlocks(ctx)
     drawPlayable(ctx)
-    if(drawPut()==="done"){
+    if(drawPut(ctx)==="done"){
         lineClear()
         if(!isContinue()){
-            ctx.font="50px serif"
-            ctx.fillText("game over",(width*(game.map.lengthX+1)),(width*(game.map.lengthY-2)))
+            drawGameover(ctx)
         }
     }
 }
@@ -142,27 +141,52 @@ function drawBack(ctx){
     ctx.fillText(("score:"+game.score),(width*(game.map.lengthX+1)),(width*(game.map.lengthY-1)))
 }
 
+// 既に積んでいるblockの描写
+function drawBlocks(ctx){
+    // 既に設置したblockを描写
+    for (let y = 0; y < game.map.lengthY; y++) {
+        for (let x = 0; x < game.map.lengthX; x++) {
+            let color = game.map.tileColors[game.map.tileAt(x, y)]
+            if (color !== null) {
+                ctx.fillStyle = color
+                ctx.fillRect(
+                    x * width,
+                    y * width,
+                    width,
+                    width
+                )
+            }
+        }
+    }
+}
+
+// 落下物の処理
+function drawPlayable(ctx){
+    game.playable.y+=5/fps  // y軸に常に移動、5は仮の値(落下時の処理を見たかったため早めに設定)
+    game.playable.draw(ctx)  // 今動かしているblockを描写
+}
+
 // 設置するかどうかの判定
-function drawPut(){
+function drawPut(ctx){
     if(!game.playable) return;
     let x=game.playable.x
     let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
     if(y+1>=game.map.lengthY){
-        put(x,y)
+        put(ctx,x,y)
         return "done"
     }else{
         if(game.map.tileAt(x,y+1)!==0){
-            put(x,y)
+            put(ctx,x,y)
             return "done"
         }
     }
 }
 
 // 設置処理
-function put(x,y){
+function put(ctx,x,y){
     game.map.tiles[game.map.tileNumber(x,y)]=game.playable.color
+    drawBlocks(ctx)
     game.playable=null
-    return "done"
 }
 
 // 横一列揃ったら消す
@@ -197,27 +221,8 @@ function isContinue(){
     }
 }
 
-// 既に積んでいるblockの描写
-function drawBlocks(ctx){
-    // 既に設置したblockを描写
-    for (let y = 0; y < game.map.lengthY; y++) {
-        for (let x = 0; x < game.map.lengthX; x++) {
-            let color = game.map.tileColors[game.map.tileAt(x, y)]
-            if (color !== null) {
-                ctx.fillStyle = color
-                ctx.fillRect(
-                    x * width,
-                    y * width,
-                    width,
-                    width
-                )
-            }
-        }
-    }
-}
-
-// 落下物の処理
-function drawPlayable(ctx){
-    game.playable.y+=5/fps  // y軸に常に移動、5は仮の値(落下時の処理を見たかったため早めに設定)
-    game.playable.draw(ctx)  // 今動かしているblockを描写
+//gameoverを表示
+function drawGameover(ctx){
+    ctx.font="50px serif"
+    ctx.fillText("game over",(width*(game.map.lengthX+1)),(width*(game.map.lengthY-2)))
 }
