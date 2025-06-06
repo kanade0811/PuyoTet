@@ -39,7 +39,6 @@ class Map {
     // 座標(x,y)を配列の番号に変換
     tileNumber(x,y){
         if (x < 0 || this.lengthX <= x || y < 0 || this.lengthY <= y){
-            console.log(x,y)
             throw new Error("存在しないタイル")
         }
         return (y * this.lengthX + x)
@@ -101,10 +100,11 @@ window.onload = function () {
                 game.playable.x = nextX
         }
     });
+
+    setInterval(draw, 1000 / fps)
 }
 
 // 1フレームごとに描写する
-setInterval(draw, 1000 / fps)
 function draw() {
     // canvasの作成
     const canvas = document.getElementById("canvas")
@@ -113,7 +113,10 @@ function draw() {
     drawBack(ctx)
     drawBlocks(ctx)
     drawPlayable(ctx)
-    drawPut()
+    if(drawPut()==="done"){
+        lineClear()
+        isContinue()
+    }
 }
 
 // 背景の描写
@@ -137,10 +140,11 @@ function drawPut(){
     let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
     if(y+1>=game.map.lengthY){
         put(x,y)
-        return
+        return "done"
     }else{
         if(game.map.tileAt(x,y+1)!==0){
-            pt(x,y)
+            put(x,y)
+            return "done"
         }
     }
 }
@@ -149,7 +153,37 @@ function drawPut(){
 function put(x,y){
     game.map.tiles[game.map.tileNumber(x,y)]=game.playable.color
     game.playable=null
-    game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+    return "done"
+}
+
+// 横一列揃ったら消す
+function lineClear(){
+    let isClear=true
+    for(let y=0;y<game.map.lengthY;y++){
+        isClear=true
+        for(let x=0;x<game.map.lengthX;x++){
+            if(game.map.tileAt(x,y)===0){
+                isClear=false
+                break
+            }
+        }
+        if(isClear){
+            game.map.tiles.splice(game.map.tileNumber(0,y),game.map.lengthX)
+            for(let k=0;k<game.map.lengthX;k++){
+                game.map.tiles.unshift(0)
+            }
+        }
+    }
+}
+
+// continue or gameoverの判定
+function isContinue(){
+    if(game.map.tileAt(4,0)===0){
+        game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+    }else{
+        console.log("game over")
+        throw new Error("game over")
+    }
 }
 
 // 既に積んでいるblockの描写
@@ -173,6 +207,6 @@ function drawBlocks(ctx){
 
 // 落下物の処理
 function drawPlayable(ctx){
-    game.playable.y+=3/fps  // y軸に常に移動、3は仮の値(落下時の処理を見たかったため早めに設定)
+    game.playable.y+=5/fps  // y軸に常に移動、5は仮の値(落下時の処理を見たかったため早めに設定)
     game.playable.draw(ctx)  // 今動かしているblockを描写
 }
