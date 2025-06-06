@@ -1,5 +1,6 @@
 // 環境変数
-const fps = 30;
+const fps = 30
+const width=50
 
 /*色とミノの形のメモ
 
@@ -69,7 +70,7 @@ class Map {
     }
     // 座標(x,y)を配列の何番目かに変換
     tileAt(x, y) {
-        return this.tiles[this.tileNumber]
+        return this.tiles[this.tileNumber(x,y)]
     }
 }
 
@@ -85,7 +86,7 @@ class Playable {
         this.y = y;
         // ここにblockの種類を追加
     }
-    draw(ctx, width) {
+    draw(ctx) {
         // 後にここでblockの色を指定
         ctx.fillStyle = "black"
         ctx.fillRect(
@@ -154,22 +155,19 @@ window.onload = function () {
 }
 
 // 1フレームごとに描写する
-const draw = function () {
+setInterval(draw, 1000 / fps)
+function draw() {
     // canvasの作成
     const canvas = document.getElementById("canvas")
     const ctx = canvas.getContext("2d")
-    const width=50
 
-    drawBack(ctx,width)
-    drawBlocks(ctx,width)
-    movePlayable()
-    game.playable.draw(ctx, width)  // 今動かしているblockを描写
+    drawBack(ctx)
+    drawBlocks(ctx)
+    drawPlayable(ctx)
 }
 
-setInterval(draw, 1000 / fps)
-
 // 背景の描写
-function drawBack(ctx,width){
+function drawBack(ctx){
     // 背景色
     ctx.fillStyle = "orange";
     ctx.fillRect(0, 0, 500, 750);
@@ -185,7 +183,7 @@ function drawBack(ctx,width){
 }
 
 // 既に積んでいるblockの描写
-function drawBlocks(ctx,width){
+function drawBlocks(ctx){
     // 既に設置したblockを描写
     for (let y = 0; y < game.map.lengthY; y++) {
         for (let x = 0; x < game.map.lengthX; x++) {
@@ -204,7 +202,7 @@ function drawBlocks(ctx,width){
 }
 
 // 落下物の処理→そのうち簡潔に書き直します
-function movePlayable(){
+function drawPlayable(ctx){
     // y軸に常に移動
     game.commands.push(new Gravity(game.playable))
     // blockを動かす行為を毎フレーム実行
@@ -212,4 +210,6 @@ function movePlayable(){
         c.exec();
     }
     game.commands = game.commands.filter(c => !c.done)
+
+    game.playable.draw(ctx)  // 今動かしているblockを描写
 }
