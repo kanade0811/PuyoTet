@@ -98,32 +98,6 @@ class Playable {
     }
 }
 
-// blockのy軸(自然落下)の動き
-class Gravity {
-    /**
-     * @param {Playable} block 移動中のblock
-     */
-    constructor(block) {
-        this.block = block
-        this.dy = 1
-        this.beginY = -1
-        this.endY = -1
-        this.frame = 0
-    }
-
-    // 1フレームずつblockを移動させる
-    exec() {
-        if (this.done) return this.done
-        this.frame++
-        if (this.frame === 1) {
-            this.beginY = this.block.y
-            this.endY = this.block.y + this.dy
-        }
-        this.block.y = this.beginY + this.frame * this.dy / fps
-        return this.done;
-    }
-}
-
 // gameの初期設定
 class Game {
     constructor() {
@@ -173,13 +147,11 @@ function drawBack(ctx){
     ctx.fillRect(0, 0, 500, 750);
 
     // マス目→見にくい気がする
-    /*
     for(let y=0;y<game.map.lengthY;y++){
         for(let x=0;x<game.map.lengthX;x++){
             ctx.strokeRect(width*x,width*y,width,width)
         }
     }
-    */
 }
 
 // 既に積んでいるblockの描写
@@ -203,13 +175,6 @@ function drawBlocks(ctx){
 
 // 落下物の処理→そのうち簡潔に書き直します
 function drawPlayable(ctx){
-    // y軸に常に移動
-    game.commands.push(new Gravity(game.playable))
-    // blockを動かす行為を毎フレーム実行
-    for (let c of game.commands) {
-        c.exec();
-    }
-    game.commands = game.commands.filter(c => !c.done)
-
+    game.playable.y+=1/fps  // y軸に常に移動
     game.playable.draw(ctx)  // 今動かしているblockを描写
 }
