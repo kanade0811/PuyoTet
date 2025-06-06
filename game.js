@@ -79,6 +79,8 @@ class Game {
     constructor() {
         this.map = new Map()
         this.playable = null
+        this.score=0
+        this.gameInterval=setInterval(draw, 1000 / fps)
     }
 }
 let game
@@ -100,8 +102,6 @@ window.onload = function () {
                 game.playable.x = nextX
         }
     });
-
-    setInterval(draw, 1000 / fps)
 }
 
 // 1フレームごとに描写する
@@ -110,20 +110,24 @@ function draw() {
     const canvas = document.getElementById("canvas")
     const ctx = canvas.getContext("2d")
 
+    ctx.clearRect(0,0,1000,750)
     drawBack(ctx)
     drawBlocks(ctx)
     drawPlayable(ctx)
     if(drawPut()==="done"){
         lineClear()
-        isContinue()
+        if(!isContinue()){
+            ctx.font="50px serif"
+            ctx.fillText("game over",(width*(game.map.lengthX+1)),(width*(game.map.lengthY-2)))
+        }
     }
 }
 
 // 背景の描写
 function drawBack(ctx){
     // 背景色
-    ctx.fillStyle = "orange";
-    ctx.fillRect(0, 0, 500, 750);
+    ctx.fillStyle = "orange"
+    ctx.fillRect(0, 0, 500, 750)
 
     // マス目→見にくい気がする
     for(let y=0;y<game.map.lengthY;y++){
@@ -131,6 +135,11 @@ function drawBack(ctx){
             ctx.strokeRect(width*x,width*y,width,width)
         }
     }
+
+    // スコアの描写
+    ctx.fillStyle = "black"
+    ctx.font="50px serif"
+    ctx.fillText(("score:"+game.score),(width*(game.map.lengthX+1)),(width*(game.map.lengthY-1)))
 }
 
 // 設置するかどうかの判定
@@ -172,6 +181,7 @@ function lineClear(){
             for(let k=0;k<game.map.lengthX;k++){
                 game.map.tiles.unshift(0)
             }
+            game.score+=game.map.lengthX
         }
     }
 }
@@ -180,9 +190,10 @@ function lineClear(){
 function isContinue(){
     if(game.map.tileAt(4,0)===0){
         game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+        return true
     }else{
-        console.log("game over")
-        throw new Error("game over")
+        clearInterval(game.gameInterval)
+        return false
     }
 }
 
