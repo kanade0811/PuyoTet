@@ -60,7 +60,7 @@ class Playable {
         this.x = x;
         this.y = y;
         // ここにblockの種類を追加
-        this.color=6    // 仮として黒固定
+        this.color=Math.floor(Math.random()*5+1)    // 仮として黒固定
     }
     draw(ctx) {
         // 後にここでblockの色を指定
