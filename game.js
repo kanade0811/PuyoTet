@@ -114,8 +114,10 @@ function draw() {
     drawBack(ctx)
     drawBlocks(ctx)
     drawPlayable(ctx)
-    if(drawPut(ctx)==="done"){
-        lineClear()
+    let xy=drawPut()
+    if(xy){
+        put(ctx,xy)
+        lineClear(xy)
         if(!isContinue()){
             drawGameover(ctx)
         }
@@ -167,47 +169,39 @@ function drawPlayable(ctx){
 }
 
 // 設置するかどうかの判定
-function drawPut(ctx){
+function drawPut(){
     if(!game.playable) return;
     let x=game.playable.x
     let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
     if(y+1>=game.map.lengthY){
-        put(ctx,x,y)
-        return "done"
+        return [x,y]
     }else{
         if(game.map.tileAt(x,y+1)!==0){
-            put(ctx,x,y)
-            return "done"
+            return [x,y]
         }
     }
 }
 
 // 設置処理
-function put(ctx,x,y){
-    game.map.tiles[game.map.tileNumber(x,y)]=game.playable.color
+function put(ctx,xy){
+    game.map.tiles[game.map.tileNumber(xy[0],xy[1])]=game.playable.color
     drawBlocks(ctx)
     game.playable=null
 }
 
 // 横一列揃ったら消す
-function lineClear(){
-    let isClear=true
-    for(let y=0;y<game.map.lengthY;y++){
-        isClear=true
-        for(let x=0;x<game.map.lengthX;x++){
-            if(game.map.tileAt(x,y)===0){
-                isClear=false
-                break
-            }
-        }
-        if(isClear){
-            game.map.tiles.splice(game.map.tileNumber(0,y),game.map.lengthX)
-            for(let k=0;k<game.map.lengthX;k++){
-                game.map.tiles.unshift(0)
-            }
-            game.score+=game.map.lengthX
+function lineClear(xy){
+    let y=xy[1]
+    for(let x=0;x<game.map.lengthX;x++){
+        if(game.map.tileAt(x,y)===0){
+            return
         }
     }
+    game.map.tiles.splice(game.map.tileNumber(0,y),game.map.lengthX)
+    for(let k=0;k<game.map.lengthX;k++){
+        game.map.tiles.unshift(0)
+    }
+    game.score+=game.map.lengthX
 }
 
 // continue or gameoverの判定
