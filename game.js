@@ -107,6 +107,18 @@ window.onload = function () {
                 game.playable.x = nextX
         }
     });
+    // 下が押されたら落下速度上昇
+    document.addEventListener("keydown", (event) => {
+        if(event.code==="KeyS"){
+            game.system.setSpeed(1)
+        }
+    });
+    // 下が離されたら落下速度を元に戻す
+    document.addEventListener("keyup", (event) => {
+        if(event.code==="KeyS"){
+            game.system.setSpeed(0)
+        }
+    });
 }
 
 // 1フレームごとに描写する
@@ -167,7 +179,7 @@ class Draw{
         }
     }
     playable(){
-        game.playable.y+=5/fps  // y軸に常に移動、5は仮の値(落下時の処理を見たかったため早めに設定)
+        game.playable.y+=game.system.speed/fps  // y軸に常に移動
         game.playable.draw(this.ctx)  // 今動かしているblockを描写
     }
     put(xy){
@@ -176,12 +188,21 @@ class Draw{
         game.playable=null
     }
     gameover(){
+        this.ctx.fillStyle="black"
         this.ctx.font="50px serif"
         this.ctx.fillText("game over",(width*(game.map.lengthX+1)),(width*(game.map.lengthY-2)))
     }
 }
 
 class System{
+    constructor(){
+        this.defaultSpeed=1
+        this.speed=this.defaultSpeed
+    }
+    setSpeed(keydown){
+        this.incraseSpeed=keydown*10
+        this.speed=this.defaultSpeed+this.incraseSpeed
+    }
     putOrNot(){
         if(!game.playable) return;
         let x=game.playable.x
