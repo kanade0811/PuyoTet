@@ -81,6 +81,11 @@ class Game {
         this.playable = null
         this.score=0
         this.gameInterval=setInterval(draw, 1000 / fps)
+        // canvasの作成
+        const canvas = document.getElementById("canvas")
+        const ctx = canvas.getContext("2d")
+        this.draw=new Draw(ctx)
+        this.system=new System()
     }
 }
 let game
@@ -102,121 +107,134 @@ window.onload = function () {
                 game.playable.x = nextX
         }
     });
+    // 下が押されたら落下速度上昇
+    document.addEventListener("keydown", (event) => {
+        if(event.code==="KeyS"){
+            game.system.setSpeed(1)
+        }
+    });
+    // 下が離されたら落下速度を元に戻す
+    document.addEventListener("keyup", (event) => {
+        if(event.code==="KeyS"){
+            game.system.setSpeed(0)
+        }
+    });
 }
 
 // 1フレームごとに描写する
 function draw() {
-    // canvasの作成
-    const canvas = document.getElementById("canvas")
-    const ctx = canvas.getContext("2d")
+    game.draw.clear()
+    game.draw.background()
+    game.draw.blocks()
+    game.draw.playable()
 
-    ctx.clearRect(0,0,1000,750)
-    drawBack(ctx)
-    drawBlocks(ctx)
-    drawPlayable(ctx)
-    let xy=drawPut()
+    let xy=game.system.putOrNot()
     if(xy){
-        put(ctx,xy)
-        lineClear(xy)
-        if(!isContinue()){
-            drawGameover(ctx)
+        game.draw.put(xy)
+        game.system.lineClear(xy)
+        if(!game.system.isContinue()){
+            game.draw.gameover()
         }
     }
 }
 
-// 背景の描写
-function drawBack(ctx){
-    // 背景色
-    ctx.fillStyle = "orange"
-    ctx.fillRect(0, 0, 500, 750)
-
-    // マス目→見にくい気がする
-    for(let y=0;y<game.map.lengthY;y++){
-        for(let x=0;x<game.map.lengthX;x++){
-            ctx.strokeRect(width*x,width*y,width,width)
-        }
+class Draw{
+    constructor(ctx){
+        this.ctx=ctx
     }
+    clear(){
+        this.ctx.clearRect(0,0,1000,750)
+    }
+    background(){
+        // 背景色
+        this.ctx.fillStyle = "orange"
+        this.ctx.fillRect(0, 0, 500, 750)
 
-    // スコアの描写
-    ctx.fillStyle = "black"
-    ctx.font="50px serif"
-    ctx.fillText(("score:"+game.score),(width*(game.map.lengthX+1)),(width*(game.map.lengthY-1)))
-}
+        // マス目
+        for(let y=0;y<game.map.lengthY;y++){
+            for(let x=0;x<game.map.lengthX;x++){
+                this.ctx.strokeRect(width*x,width*y,width,width)
+            }
+        }
 
-// 既に積んでいるblockの描写
-function drawBlocks(ctx){
-    // 既に設置したblockを描写
-    for (let y = 0; y < game.map.lengthY; y++) {
-        for (let x = 0; x < game.map.lengthX; x++) {
-            let color = game.map.tileColors[game.map.tileAt(x, y)]
-            if (color !== null) {
-                ctx.fillStyle = color
-                ctx.fillRect(
-                    x * width,
-                    y * width,
-                    width,
-                    width
-                )
+        // スコアの描写
+        this.ctx.fillStyle = "black"
+        this.ctx.font="50px serif"
+        this.ctx.fillText(("score:"+game.score),(width*(game.map.lengthX+1)),(width*(game.map.lengthY-1)))
+    }
+    blocks(){
+        for (let y = 0; y < game.map.lengthY; y++) {
+            for (let x = 0; x < game.map.lengthX; x++) {
+                let color = game.map.tileColors[game.map.tileAt(x, y)]
+                if (color !== null) {
+                    this.ctx.fillStyle = color
+                    this.ctx.fillRect(
+                        x * width,
+                        y * width,
+                        width,
+                        width
+                    )
+                }
             }
         }
     }
+    playable(){
+        game.playable.y+=game.system.speed/fps  // y軸に常に移動
+        game.playable.draw(this.ctx)  // 今動かしているblockを描写
+    }
+    put(xy){
+        game.map.tiles[game.map.tileNumber(xy[0],xy[1])]=game.playable.color
+        this.blocks()
+        game.playable=null
+    }
+    gameover(){
+        this.ctx.fillStyle="black"
+        this.ctx.font="50px serif"
+        this.ctx.fillText("game over",(width*(game.map.lengthX+1)),(width*(game.map.lengthY-2)))
+    }
 }
 
-// 落下物の処理
-function drawPlayable(ctx){
-    game.playable.y+=5/fps  // y軸に常に移動、5は仮の値(落下時の処理を見たかったため早めに設定)
-    game.playable.draw(ctx)  // 今動かしているblockを描写
-}
-
-// 設置するかどうかの判定
-function drawPut(){
-    if(!game.playable) return;
-    let x=game.playable.x
-    let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
-    if(y+1>=game.map.lengthY){
-        return [x,y]
-    }else{
-        if(game.map.tileAt(x,y+1)!==0){
+class System{
+    constructor(){
+        this.defaultSpeed=1
+        this.speed=this.defaultSpeed
+    }
+    setSpeed(keydown){
+        this.incraseSpeed=keydown*10
+        this.speed=this.defaultSpeed+this.incraseSpeed
+    }
+    putOrNot(){
+        if(!game.playable) return;
+        let x=game.playable.x
+        let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
+        if(y+1>=game.map.lengthY){
             return [x,y]
+        }else{
+            if(game.map.tileAt(x,y+1)!==0){
+                return [x,y]
+            }
         }
     }
-}
-
-// 設置処理
-function put(ctx,xy){
-    game.map.tiles[game.map.tileNumber(xy[0],xy[1])]=game.playable.color
-    drawBlocks(ctx)
-    game.playable=null
-}
-
-// 横一列揃ったら消す
-function lineClear(xy){
-    let y=xy[1]
-    for(let x=0;x<game.map.lengthX;x++){
-        if(game.map.tileAt(x,y)===0){
-            return
+    lineClear(xy){
+        let y=xy[1]
+        for(let x=0;x<game.map.lengthX;x++){
+            if(game.map.tileAt(x,y)===0){
+                return
+            }
+        }
+        game.map.tiles.splice(game.map.tileNumber(0,y),game.map.lengthX)
+        for(let k=0;k<game.map.lengthX;k++){
+            game.map.tiles.unshift(0)
+        }
+        game.score+=game.map.lengthX
+    }
+    isContinue(){
+        if(game.map.tileAt(4,0)===0){
+            game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+            return true
+        }else{
+            clearInterval(game.gameInterval)
+            return false
         }
     }
-    game.map.tiles.splice(game.map.tileNumber(0,y),game.map.lengthX)
-    for(let k=0;k<game.map.lengthX;k++){
-        game.map.tiles.unshift(0)
-    }
-    game.score+=game.map.lengthX
-}
-
-// continue or gameoverの判定
-function isContinue(){
-    if(game.map.tileAt(4,0)===0){
-        game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
-        return true
-    }else{
-        clearInterval(game.gameInterval)
-        return false
-    }
-}
-
-//gameoverを表示
-function drawGameover(ctx){
-    ctx.font="50px serif"
-    ctx.fillText("game over",(width*(game.map.lengthX+1)),(width*(game.map.lengthY-2)))
 }
