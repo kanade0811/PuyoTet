@@ -32,14 +32,13 @@ class Map {
                 "yellow",
                 "green",
                 "purple",
-                "black" // 落下物に色を付ける前の仮の色
             ]
     }
 
     // 座標(x,y)を配列の番号に変換
     tileNumber(x,y){
         if (x < 0 || this.lengthX <= x || y < 0 || this.lengthY <= y){
-            throw new Error("存在しないタイル")
+            return null
         }
         return (y * this.lengthX + x)
     }
@@ -60,7 +59,7 @@ class Playable {
         this.x = x;
         this.y = y;
         // ここにblockの種類を追加
-        this.color=Math.floor(Math.random()*5+1)    // 仮として黒固定
+        this.color=Math.floor(Math.random()*5+1)
     }
     draw(ctx) {
         // 後にここでblockの色を指定
@@ -132,6 +131,7 @@ function draw() {
     if(xy){
         game.draw.put(xy)
         game.system.lineClear(xy)
+        game.system.colorClear(xy)
         if(!game.system.isContinue()){
             game.draw.gameover()
         }
@@ -207,12 +207,8 @@ class System{
         if(!game.playable) return;
         let x=game.playable.x
         let y=Math.floor(game.playable.y)   // y座標の丸め誤差を調整
-        if(y+1>=game.map.lengthY){
+        if(y+1>=game.map.lengthY||game.map.tileAt(x,y+1)!==0){
             return [x,y]
-        }else{
-            if(game.map.tileAt(x,y+1)!==0){
-                return [x,y]
-            }
         }
     }
     lineClear(xy){
@@ -227,6 +223,39 @@ class System{
             game.map.tiles.unshift(0)
         }
         game.score+=game.map.lengthX
+    }
+    colorClear(xy){
+        // xy=[x,y]　設置したblockの座標の配列
+        console.log(xy)
+        let sameColor=[]
+        sameColor.push(xy)
+        for(let m=0;m<sameColor.length;m++){
+            console.log("befor:",+sameColor[m]) // ここが既に出来てない
+        }
+        for(let k=0;k<sameColor.length;k++){
+            let base=sameColor[k]
+            let search=[    // 探索する上下左右のblock
+                [base[0],base[1]-1],
+                [base[0]-1,base[1]],
+                [base[0],base[1]+1],
+                [base[0]+1,base[1]]
+            ]
+            for(let l=0;l<search.length;l++){   // 同じ色かつ配列に無い座標だったら追加
+                if(game.map.tileAt(base[0],base[1])===game.map.tileAt(search[l][0],search[l][1]) &&
+                        sameColor.includes(search[l]===false)){
+                    sameColor.push(search[l])
+                }
+            }
+        }
+        for(let m=0;m<sameColor.length;m++){
+            console.log("after:",+sameColor[m])
+        }
+        if(sameColor.length>=4){    // 4つ以上色が揃ったら0にしてScore加算
+            for(let k=0;k<sameColor.length;k++){
+                game.map.tiles[game.map.tileAt(sameColor[k][0],game.map.tileAt[k][1])]=0
+            }
+            game.score+=(sameColor.length+1)
+        }
     }
     isContinue(){
         if(game.map.tileAt(4,0)===0){
