@@ -75,20 +75,21 @@ class Type {
     constructor() {
         this.x = 4
         this.y = 0
-        this.shape = {
-            0: [[-1, 0], [0, 0], [1, 0], [2, 0]], // I
-            1: [[0, 0], [1, 0], [0, 1], [1, 1]], // O
-            2: [[0, 0], [-1, 1], [0, 1], [1, 1]], // T
-            3: [[-1, 0], [-1, 1], [0, 1], [1, 1]], // J
-            4: [[1, 0], [-1, 1], [0, 1], [1, 1]], // L
-            5: [[0, 0], [1, 0], [-1, 1], [0, 1]], // S
-            6: [[-1, 0], [0, 0], [0, 1], [1, 1]] //Z
-        }
-        this.rotation =[[
+        this.shape = [
+            [[-1, 0], [0, 0], [1, 0], [2, 0]], // I
+            [[0, 0], [1, 0], [0, 1], [1, 1]], // O
+            [[0, 0], [-1, 1], [0, 1], [1, 1]], // T
+            [[-1, 0], [-1, 1], [0, 1], [1, 1]], // J
+            [[1, 0], [-1, 1], [0, 1], [1, 1]], // L
+            [[0, 0], [1, 0], [-1, 1], [0, 1]], // S
+            [[-1, 0], [0, 0], [0, 1], [1, 1]] //Z
+        ]
+        this.rotation = [
+            [
                 [[-1, 1], [0, 0], [1, -1], [2, -2]], // 0to1
                 [[1, 1], [0, 0], [-1, -1], [-2, -2]], // 1to2
                 [[1, -1], [0, 0], [-1, 1], [-2, 2]], // 2to3
-                [[1, 1], [0, 0], [1, 1], [2, 2]] // 3to0
+                [[-1, -1], [0, 0], [1, 1], [2, 2]] // 3to0
             ], [
                 [[0, 0], [1, -1], [0, -2], [-1, -1]],
                 [[0, 0], [-1, -1], [-2, 0], [-1, 1]],
@@ -119,7 +120,8 @@ class Type {
                 [[1, -1], [0, 0], [-1, -1], [-2, 0]],
                 [[-1, -1], [0, 0], [-1, 1], [0, 2]],
                 [[-1, 1], [0, 0], [1, 1], [2, 0]]
-            ]]
+            ]
+        ]
     }
     create(type) {
         for (let k = 0; k < 4; k++) {
@@ -129,9 +131,9 @@ class Type {
             )
         }
     }
-    rotate(){
+    rotate() {
         game.playable.rotation = (game.playable.rotation + 1) % 4
-        for(let k=0;k<game.playBlocks.length;k++){
+        for (let k = 0; k < game.playBlocks.length; k++) {
             game.playBlocks[k].x += this.rotation[game.playable.type][game.playable.rotation][k][0]
             game.playBlocks[k].y += this.rotation[game.playable.type][game.playable.rotation][k][1]
         }
@@ -144,6 +146,8 @@ class Game {
         this.map = new Map()
         this.type = new Type()
         this.playable = {
+            x:4,
+            y:0,
             type: null,
             rotation: 0
         }
@@ -159,7 +163,8 @@ window.onload = function () {
 
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    game.playable.type = Math.floor(Math.random() * 7)
+    // game.playable.type = Math.floor(Math.random() * 7)
+    game.playable.type = 1
     game.playable.rotation = 0
     game.type.create(game.playable.type)
 
@@ -364,7 +369,8 @@ function colorClear() {
 function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
         game.playBlocks = []
-        game.playable.type = Math.floor(Math.random() * 7)
+        // game.playable.type = Math.floor(Math.random() * 7)
+        game.playable.type = 1
         game.playable.rotation = 0
         game.type.create(game.playable.type)
         return true
