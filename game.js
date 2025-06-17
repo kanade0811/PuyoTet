@@ -72,7 +72,9 @@ class Block {
 }
 
 class Type {
-    constructor(x, y, type) {
+    constructor() {
+        this.x=4
+        this.y=0
         this.shape = {
             0: [[-1, 0], [0, 0], [1, 0], [2, 0]], // I
             1: [[0, 0], [1, 0], [0, 1], [1, 1]], // O
@@ -82,9 +84,14 @@ class Type {
             5: [[0, 0], [1, 0], [-1, 1], [0, 1]], // S
             6: [[-1, 0], [0, 0], [0, 1], [1, 1]] //Z
         }
+    }
+    create(type){
         for(let k=0;k<4;k++){
-            game.playBlocks[k]=new Block(x+this.shape[type][k][0],y+this.shape[type][k][1])
-        }
+            game.playBlocks[k]=new Block(
+                this.x+this.shape[type][k][0],
+                this.y+this.shape[type][k][1]
+            )
+        }   
     }
 }
 
@@ -92,7 +99,11 @@ class Type {
 class Game {
     constructor() {
         this.map = new Map()
-        this.playable=null
+        this.type=new Type()
+        this.playable={
+            type:null,
+            rotation:0
+        }
         this.playBlocks =[]
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
@@ -105,7 +116,8 @@ window.onload = function () {
 
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    game.playable = new Type(4, 0, Math.floor(Math.random() * 7))
+    game.playable.type=Math.floor(Math.random() * 7)
+    game.type.create(game.playable.type)
 
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
@@ -252,8 +264,6 @@ function lineClear() {
                 clearable=false
             }
         }
-        console.log(clearable)
-        console.log(game.map.tiles)
         if(clearable===true){
             game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
             for (let k = 0; k < game.map.lengthX; k++) {
@@ -304,7 +314,9 @@ function colorClear() {
 function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
         game.playBlocks=[]
-        game.playable = new Type(4, 0, Math.floor(Math.random() * 7))
+        game.playable.type=Math.floor(Math.random() * 7)
+        game.playable.rotatio=0
+        game.type.create(game.playable.type)
         return true
     } else {
         clearInterval(game.gameInterval)
