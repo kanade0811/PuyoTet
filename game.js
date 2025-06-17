@@ -73,8 +73,8 @@ class Block {
 
 class Type {
     constructor() {
-        this.x=4
-        this.y=0
+        this.x = 4
+        this.y = 0
         this.shape = {
             0: [[-1, 0], [0, 0], [1, 0], [2, 0]], // I
             1: [[0, 0], [1, 0], [0, 1], [1, 1]], // O
@@ -84,14 +84,57 @@ class Type {
             5: [[0, 0], [1, 0], [-1, 1], [0, 1]], // S
             6: [[-1, 0], [0, 0], [0, 1], [1, 1]] //Z
         }
+        this.rotation =[[
+                [[-1, 1], [0, 0], [1, -1], [2, -2]], // 0to1
+                [[1, 1], [0, 0], [-1, -1], [-2, -2]], // 1to2
+                [[1, -1], [0, 0], [-1, 1], [-2, 2]], // 2to3
+                [[1, 1], [0, 0], [1, 1], [2, 2]] // 3to0
+            ], [
+                [[0, 0], [1, -1], [0, -2], [-1, -1]],
+                [[0, 0], [-1, -1], [-2, 0], [-1, 1]],
+                [[0, 0], [-1, 1], [0, 2], [1, 1]],
+                [[0, 0], [1, 1], [2, 0], [1, -1]]
+            ], [
+                [[0, 0], [2, 0], [1, -1], [0, -2]],
+                [[0, 0], [0, -2], [-1, -1], [-2, 0]],
+                [[0, 0], [-2, 0], [-1, 1], [0, 2]],
+                [[0, 0], [0, 2], [1, 1], [2, 0]]
+            ], [
+                [[1, 1], [2, 0], [1, -1], [0, -2]],
+                [[1, -1], [0, -2], [-1, -1], [-2, 0]],
+                [[-1, -1], [-2, 0], [-1, 1], [0, 2]],
+                [[-1, 1], [0, 2], [1, 1], [2, 0]]
+            ], [
+                [[-1, 1], [2, 0], [1, -1], [0, -2]],
+                [[-1, 1], [0, -2], [-1, -1], [-2, 0]],
+                [[1, 1], [-2, 0], [-1, 1], [0, 2]],
+                [[1, -1], [0, 2], [1, 1], [2, 0]]
+            ], [
+                [[0, 0], [-1, -1], [2, 0], [1, -1]],
+                [[0, 0], [-1, 1], [0, -2], [-1, -1]],
+                [[0, 0], [1, 1], [-2, 0], [-1, 1]],
+                [[0, 0], [1, -1], [0, 2], [1, 1]]
+            ], [
+                [[1, 1], [0, 0], [1, -1], [0, -2]],
+                [[1, -1], [0, 0], [-1, -1], [-2, 0]],
+                [[-1, -1], [0, 0], [-1, 1], [0, 2]],
+                [[-1, 1], [0, 0], [1, 1], [2, 0]]
+            ]]
     }
-    create(type){
-        for(let k=0;k<4;k++){
-            game.playBlocks[k]=new Block(
-                this.x+this.shape[type][k][0],
-                this.y+this.shape[type][k][1]
+    create(type) {
+        for (let k = 0; k < 4; k++) {
+            game.playBlocks[k] = new Block(
+                this.x + this.shape[type][k][0],
+                this.y + this.shape[type][k][1]
             )
-        }   
+        }
+    }
+    rotate(){
+        game.playable.rotation = (game.playable.rotation + 1) % 4
+        for(let k=0;k<game.playBlocks.length;k++){
+            game.playBlocks[k].x += this.rotation[game.playable.type][game.playable.rotation][k][0]
+            game.playBlocks[k].y += this.rotation[game.playable.type][game.playable.rotation][k][1]
+        }
     }
 }
 
@@ -99,15 +142,15 @@ class Type {
 class Game {
     constructor() {
         this.map = new Map()
-        this.type=new Type()
-        this.playable={
-            type:null,
-            rotation:0
+        this.type = new Type()
+        this.playable = {
+            type: null,
+            rotation: 0
         }
-        this.playBlocks =[]
+        this.playBlocks = []
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
-        this.speed=1
+        this.speed = 1
     }
 }
 let game
@@ -116,26 +159,27 @@ window.onload = function () {
 
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    game.playable.type=Math.floor(Math.random() * 7)
+    game.playable.type = Math.floor(Math.random() * 7)
+    game.playable.rotation = 0
     game.type.create(game.playable.type)
 
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
-        if(event.code === "KeyA" || event.code === "KeyD"){
+        if (event.code === "KeyA" || event.code === "KeyD") {
             let move = { KeyA: -1, KeyD: 1 };
             let dx = move[event.code];
-            let nextMove=true
-            for(let k of game.playBlocks){
+            let nextMove = true
+            for (let k of game.playBlocks) {
                 if (dx !== undefined) {
                     let nextX = k.x + dx
-                    if(!(0 <= nextX && nextX < game.map.lengthX)){
-                        nextMove=false
+                    if (!(0 <= nextX && nextX < game.map.lengthX)) {
+                        nextMove = false
                     }
                 }
             }
-            if(nextMove===true){
-                for(let k of game.playBlocks){
-                    k.x=k.x+dx
+            if (nextMove === true) {
+                for (let k of game.playBlocks) {
+                    k.x = k.x + dx
                 }
             }
         }
@@ -152,6 +196,12 @@ window.onload = function () {
             setSpeed(0)
         }
     });
+    // 上が押されたら回転
+    document.addEventListener("keydown", (event) => {
+        if (event.code === "KeyW") {
+            game.type.rotate()
+        }
+    });
 }
 
 // canvasの作成
@@ -165,7 +215,7 @@ function draw() {
     blocks()
     playable()
 
-    if (putOrNot()===true) {
+    if (putOrNot() === true) {
         put()
         lineClear()
         colorClear()
@@ -215,7 +265,7 @@ function blocks() {
 }
 
 function playable() {
-    for(let k of game.playBlocks){
+    for (let k of game.playBlocks) {
         k.y += game.speed / fps  // y軸に常に移動
         k.draw(ctx)  // 今動かしているblockを描写
     }
@@ -227,44 +277,44 @@ function gameover() {
     ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
 }
 
-const defaultSpeed=1
-const incraseSpeed=9
+const defaultSpeed = 1
+const incraseSpeed = 9
 function setSpeed(keydown) {
-    game.speed = defaultSpeed + incraseSpeed*keydown
+    game.speed = defaultSpeed + incraseSpeed * keydown
 }
 
 function putOrNot() {
-    if (game.playBlocks.length===0) return;
-    let putable=false
-    for(let k of game.playBlocks){
-        let x=k.x
-        let y=Math.floor(k.y)
+    if (game.playBlocks.length === 0) return;
+    let putable = false
+    for (let k of game.playBlocks) {
+        let x = k.x
+        let y = Math.floor(k.y)
         if (y + 1 >= game.map.lengthY || game.map.tileAt(x, y + 1) !== 0) {
-            putable=true
+            putable = true
         }
     }
     return putable
 }
 
 function put() {
-    for(let k of game.playBlocks){
-        let x=k.x
-        let y=Math.floor(k.y)
+    for (let k of game.playBlocks) {
+        let x = k.x
+        let y = Math.floor(k.y)
         game.map.tiles[game.map.tileNumber(x, y)] = k.color
     }
     blocks()
 }
 
 function lineClear() {
-    for(let k of game.playBlocks){
-        let clearable=true
-        let y=Math.floor(k.y)
+    for (let k of game.playBlocks) {
+        let clearable = true
+        let y = Math.floor(k.y)
         for (let x = 0; x < game.map.lengthX; x++) {
             if (game.map.tileAt(x, y) === 0) {
-                clearable=false
+                clearable = false
             }
         }
-        if(clearable===true){
+        if (clearable === true) {
             game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
             for (let k = 0; k < game.map.lengthX; k++) {
                 game.map.tiles.unshift(0)
@@ -275,10 +325,10 @@ function lineClear() {
 }
 
 function colorClear() {
-    for(let n of game.playBlocks){
-        let x=n.x
-        let y=Math.floor(n.y)
-        let sameColor=[[x,y]]
+    for (let n of game.playBlocks) {
+        let x = n.x
+        let y = Math.floor(n.y)
+        let sameColor = [[x, y]]
         for (let k = 0; k < sameColor.length; k++) {
             let base = sameColor[k]
             let search = [
@@ -313,9 +363,9 @@ function colorClear() {
 
 function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
-        game.playBlocks=[]
-        game.playable.type=Math.floor(Math.random() * 7)
-        game.playable.rotatio=0
+        game.playBlocks = []
+        game.playable.type = Math.floor(Math.random() * 7)
+        game.playable.rotation = 0
         game.type.create(game.playable.type)
         return true
     } else {
