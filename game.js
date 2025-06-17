@@ -49,20 +49,18 @@ class Map {
 }
 
 // 落下中のblock
-class Playable {
+class Block {
     /**
     * @param {number} x blockの初期X
     * @param {number} y blockの初期Y
     * @param {number} type blockの種類
     */
-    constructor(x, y, type) {
+    constructor(x, y) {
         this.x = x;
         this.y = y;
-        // ここにblockの種類を追加
         this.color = Math.floor(Math.random() * 5 + 1)
     }
     draw(ctx) {
-        // 後にここでblockの色を指定
         ctx.fillStyle = game.map.tileColors[this.color]
         ctx.fillRect(
             this.x * width,
@@ -73,11 +71,29 @@ class Playable {
     }
 }
 
+class Type {
+    constructor(x, y, type) {
+        this.shape = {
+            0: [[-1, 0], [0, 0], [1, 0], [2, 0]], // I
+            1: [[0, 0], [1, 0], [0, 1], [1, 1]], // O
+            2: [[0, 0], [-1, 1], [0, 1], [1, 1]], // T
+            3: [[-1, 0], [-1, 1], [0, 1], [1, 1]], // J
+            4: [[1, 0], [-1, 1], [0, 1], [1, 1]], // L
+            5: [[0, 0], [1, 0], [-1, 1], [0, 1]], // S
+            6: [[-1, 0], [0, 0], [0, 1], [1, 1]] //Z
+        }
+        for(let k=0;k<4;k++){
+            game.playBlocks[k]=new Block(x+this.shape[type][k][0],y+this.shape[type][k][1])
+        }
+    }
+}
+
 // gameの初期設定
 class Game {
     constructor() {
         this.map = new Map()
-        this.playable = null
+        this.playable=null
+        this.playBlocks =[]
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
         // canvasの作成
@@ -93,17 +109,27 @@ window.onload = function () {
 
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+    game.playable = new Type(4, 0, Math.floor(Math.random() * 7))
 
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
-        let move = { KeyA: -1, KeyD: 1 };
-        let dx = move[event.code];
-        if (dx !== undefined) {
-            let nextX = game.playable.x + dx
-            // 移動先が枠内だったときのみ移動を実行
-            if (0 <= nextX && nextX < game.map.lengthX)
-                game.playable.x = nextX
+        if(event.code === "KeyA" || event.code === "KeyD"){
+            let move = { KeyA: -1, KeyD: 1 };
+            let dx = move[event.code];
+            let nextMove=true
+            for(let k of game.playBlocks){
+                if (dx !== undefined) {
+                    let nextX = k.x + dx
+                    if(!(0 <= nextX && nextX < game.map.lengthX)){
+                        nextMove=false
+                    }
+                }
+            }
+            if(nextMove===true){
+                for(let k of game.playBlocks){
+                    k.x=k.x+dx
+                }
+            }
         }
     });
     // 下が押されたら落下速度上昇
@@ -127,11 +153,10 @@ function draw() {
     game.draw.blocks()
     game.draw.playable()
 
-    let xy = game.system.putOrNot()
-    if (xy) {
-        game.draw.put(xy)
-        game.system.lineClear(xy)
-        game.system.colorClear(xy)
+    if (game.system.putOrNot()===true) {
+        game.system.put()
+        game.system.lineClear()
+        game.system.colorClear()
         if (!game.system.isContinue()) {
             game.draw.gameover()
         }
@@ -179,13 +204,10 @@ class Draw {
         }
     }
     playable() {
-        game.playable.y += game.system.speed / fps  // y軸に常に移動
-        game.playable.draw(this.ctx)  // 今動かしているblockを描写
-    }
-    put(xy) {
-        game.map.tiles[game.map.tileNumber(xy[0], xy[1])] = game.playable.color
-        this.blocks()
-        game.playable = null
+        for(let k of game.playBlocks){
+            k.y += game.system.speed / fps  // y軸に常に移動
+            k.draw(this.ctx)  // 今動かしているblockを描写
+        }
     }
     gameover() {
         this.ctx.fillStyle = "black"
@@ -204,69 +226,84 @@ class System {
         this.speed = this.defaultSpeed + this.incraseSpeed
     }
     putOrNot() {
-        if (!game.playable) return;
-        let x = game.playable.x
-        let y = Math.floor(game.playable.y)   // y座標の丸め誤差を調整
-        if (y + 1 >= game.map.lengthY || game.map.tileAt(x, y + 1) !== 0) {
-            return [x, y]
-        }
-    }
-    lineClear(xy) {
-        let y = xy[1]
-        for (let x = 0; x < game.map.lengthX; x++) {
-            if (game.map.tileAt(x, y) === 0) {
-                return
+        if (game.playBlocks.length===0) return;
+        let putable=false
+        for(let k of game.playBlocks){
+            let x=k.x
+            let y=Math.floor(k.y)
+            if (y + 1 >= game.map.lengthY || game.map.tileAt(x, y + 1) !== 0) {
+                putable=true
             }
         }
-        game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
-        for (let k = 0; k < game.map.lengthX; k++) {
-            game.map.tiles.unshift(0)
-        }
-        game.score += game.map.lengthX
+        return putable
     }
-    colorClear(xy) {
-        // xy=[x,y]　設置したblockの座標の配列
-        console.log(xy)
-        let sameColor = []
-        sameColor.push(xy)
-        for (let m = 0; m < sameColor.length; m++) {
-            console.log("before:", sameColor[m]) // ここが既に出来てない
+    put() {
+        for(let k of game.playBlocks){
+            let x=k.x
+            let y=Math.floor(k.y)
+            game.map.tiles[game.map.tileNumber(x, y)] = k.color
         }
-        for (let k = 0; k < sameColor.length; k++) {
-            let base = sameColor[k]
-            let search = [    // 探索する上下左右のblock
-                [base[0], base[1] - 1],
-                [base[0] - 1, base[1]],
-                [base[0], base[1] + 1],
-                [base[0] + 1, base[1]]
-            ]
-            for (let l = 0; l < search.length; l++) {   // 同じ色かつsameColorに無い座標だったら追加
-                if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[l][0], search[l][1])) {
-                    let exist = true
-                    for (let m = 0; m < sameColor.length; m++) {
-                        if (search[l][0] === sameColor[m][0] && search[l][1] === sameColor[m][1]) {
-                            exist = false
+        game.draw.blocks()
+    }
+    lineClear() {
+        let clearable=true
+        for(let k of game.playBlocks){
+            let y=Math.floor(k.y)
+            for (let x = 0; x < game.map.lengthX; x++) {
+                if (game.map.tileAt(x, y) === 0) {
+                    clearable=false
+                }
+            }
+            console.log(clearable)
+            if(clearable===true){
+                game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
+                for (let k = 0; k < game.map.lengthX; k++) {
+                    game.map.tiles.unshift(0)
+                }
+                game.score += game.map.lengthX
+            }
+        }
+    }
+    colorClear() {
+        for(let n of game.playBlocks){
+            let x=n.x
+            let y=Math.floor(n.y)
+            let sameColor=[[x,y]]
+            for (let k = 0; k < sameColor.length; k++) {
+                let base = sameColor[k]
+                let search = [
+                    [base[0], base[1] - 1],
+                    [base[0] - 1, base[1]],
+                    [base[0], base[1] + 1],
+                    [base[0] + 1, base[1]]
+                ]
+                for (let l = 0; l < search.length; l++) {   // 同じ色かつsameColorに無い座標だったら追加
+                    if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[l][0], search[l][1])) {
+                        let exist = true
+                        for (let m = 0; m < sameColor.length; m++) {
+                            if (search[l][0] === sameColor[m][0] && search[l][1] === sameColor[m][1]) {
+                                exist = false
+                            }
                         }
-                    }
-                    if (exist === true) {
-                        sameColor.push(search[l])
+                        if (exist === true) {
+                            sameColor.push(search[l])
+                        }
                     }
                 }
             }
-        }
-        for (let m = 0; m < sameColor.length; m++) {
-            console.log("after:", sameColor[m])
-        }
-        if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
-            for (let k = 0; k < sameColor.length; k++) {
-                game.map.tiles[game.map.tileNumber(sameColor[k][0], sameColor[k][1])] = 0
+
+            if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
+                for (let k = 0; k < sameColor.length; k++) {
+                    game.map.tiles[game.map.tileNumber(sameColor[k][0], sameColor[k][1])] = 0
+                }
+                game.score += (sameColor.length)
             }
-            game.score += (sameColor.length)
         }
     }
     isContinue() {
         if (game.map.tileAt(4, 0) === 0) {
-            game.playable = new Playable(4, 0, Math.floor(Math.random() * 7 + 1))
+            game.playBlocks=[]
+            game.playable = new Type(4, 0, Math.floor(Math.random() * 7))
             return true
         } else {
             clearInterval(game.gameInterval)
