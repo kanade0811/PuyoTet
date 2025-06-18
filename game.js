@@ -213,6 +213,8 @@ const ctx = canvas.getContext("2d")
 
 // 1フレームごとに描写する
 function draw() {
+    console.log(game.playBlocks)
+
     clear()
     background()
     blocks()
@@ -310,6 +312,32 @@ function put() {
 }
 
 function lineClear() {
+    for(let k=0;k<game.playBlocks.length;k++){
+        if(game.playBlocks[k]!==null){
+            let clearable = true
+            let x=game.playBlocks[k].x
+            let y = Math.floor(game.playBlocks[k].y)
+            for (let x = 0; x < game.map.lengthX; x++) {
+                if (game.map.tileAt(x, y) === 0) {
+                    clearable = false
+                }
+            }
+            if (clearable === true) {
+                game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
+                for (let k = 0; k < game.map.lengthX; k++) {
+                    game.map.tiles.unshift(0)
+                }
+                for(let m=0;m<game.playBlocks.length;m++){
+                    if(game.playBlocks[m].y===y){
+                        game.playBlocks[m]=null
+                    }
+                }
+                game.score += game.map.lengthX
+            }
+        }
+    }
+
+    /*
     for (let k of game.playBlocks) {
         let clearable = true
         let y = Math.floor(k.y)
@@ -323,12 +351,66 @@ function lineClear() {
             for (let k = 0; k < game.map.lengthX; k++) {
                 game.map.tiles.unshift(0)
             }
+            game.playBlocks
             game.score += game.map.lengthX
         }
     }
+    */
 }
 
 function colorClear() {
+    for(let k=0;k<game.playBlocks.length;k++){
+        if(game.playBlocks[k]!==null){
+            let x = game.playBlocks[k].x
+            let y = Math.floor(game.playBlocks[k].y)
+            let sameColor = [[x, y]]
+            for (let k = 0; k < sameColor.length; k++) {
+                let base = sameColor[k]
+                let search = [
+                    [base[0], base[1] - 1],
+                    [base[0] - 1, base[1]],
+                    [base[0], base[1] + 1],
+                    [base[0] + 1, base[1]]
+                ]
+                for (let m = 0; m < search.length; m++) {   // 同じ色かつsameColorに無い座標だったら追加
+                    if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[m][0], search[m][1])) {
+                        let exist = true
+                        for (let n = 0; n < sameColor.length; n++) {
+                            if (search[m][0] === sameColor[n][0] && search[m][1] === sameColor[n][1]) {
+                                exist = false
+                            }
+                        }
+                        if (exist === true) {
+                            sameColor.push(search[m])
+                        }
+                    }
+                }
+            }
+
+            if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
+                for (let k = 0; k < sameColor.length; k++) {
+                    game.map.tiles[game.map.tileNumber(sameColor[k][0], sameColor[k][1])] = 0
+                }
+                game.score += sameColor.length
+
+                let clear=false
+                for(let m=0;m<game.playBlocks.length;m++){
+                    clear=false
+                    for(let n=0;n<sameColor.length;n++){
+                        if(game.playBlocks[m].x===sameColor[n][0] &&game.playBlocks[m].y===sameColor[n][1]){
+                            clear=true
+                            break
+                        }
+                    }
+                    if(clear===true){
+                        game.playBlocks[m]=null
+                    }
+                }
+            }
+        }
+    }
+
+    /*
     for (let n of game.playBlocks) {
         let x = n.x
         let y = Math.floor(n.y)
@@ -360,9 +442,10 @@ function colorClear() {
             for (let k = 0; k < sameColor.length; k++) {
                 game.map.tiles[game.map.tileNumber(sameColor[k][0], sameColor[k][1])] = 0
             }
-            game.score += (sameColor.length)
+            game.score += sameColor.length
         }
     }
+    */
 }
 
 function isContinue() {
