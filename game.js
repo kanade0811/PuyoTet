@@ -81,34 +81,34 @@ class Type {
                 [[1, 0], [0, 0], [-1, 0], [-2, 0]], // π
                 [[0, -1], [0, 0], [0, 1], [0, 2]] // 3π/2
             ], [ // O
-                [[0, 0], [1, 0], [0, 1], [1, 1]],
-                [[0, 0], [1, 0], [1, -1], [0, -1]],
-                [[0, 0], [0, -1], [-1, -1], [-1, 0]],
-                [[0, 0], [-1, 0], [-1, 1], [0, 1]]
+                [[0, 0], [0, 1], [1, 1], [1, 0]],
+                [[0, 1], [1, 1], [1, 0], [0, 0]],
+                [[1, 1], [1, 0], [0, 0], [0, 1]],
+                [[1, 0], [0, 0], [0, 1], [1, 1]]
             ], [ // T
                 [[0, 0], [-1, 1], [0, 1], [1, 1]],
-                [[0, 0], [1, 1], [1, 0], [1, -1]],
-                [[0, 0], [1, -1], [0, -1], [-1, -1]],
-                [[0, 0], [-1, -1], [-1, 0], [-1, 1]]
+                [[-1, 1], [0, 2], [0, 1], [0, 0]],
+                [[0, 2], [1, 1], [0, 1], [-1, 1]],
+                [[1, 1], [0, 0], [0, 1], [0, 2]]
             ], [ // J
                 [[-1, 0], [-1, 1], [0, 1], [1, 1]],
                 [[0, 1], [1, 1], [1, 0], [1, -1]],
-                [[1, 0], [1, -1], [0, -1], [-1, -1]],
+                [[1, 1], [1, 0], [0, 0], [-1, 0]],
                 [[0, -1], [-1, -1], [-1, 0], [-1, 1]]
             ], [ // L
                 [[1, 0], [-1, 1], [0, 1], [1, 1]],
                 [[0, -1], [1, 1], [1, 0], [1, -1]],
-                [[-1, 0], [1, -1], [0, -1], [-1, -1]],
-                [[0, -1], [-1, -1], [-1, 0], [-1, 1]]
+                [[-1, 1], [1, 0], [0, 0], [-1, 0]],
+                [[0, 1], [-1, -1], [-1, 0], [-1, 1]]
             ], [ // S
                 [[0, 0], [1, 0], [-1, 1], [0, 1]],
                 [[0, 0], [0, -1], [1, 1], [1, 0]],
-                [[0, 0], [-1, 0], [1, -1], [0, -1]],
+                [[0, 1], [-1, 1], [1, 0], [0, 0]],
                 [[0, 0], [0, 1], [-1, -1], [-1, 0]]
             ], [ // Z
                 [[-1, 0], [0, 0], [0, 1], [1, 1]],
                 [[0, 1], [0, 0], [1, 0], [1, -1]],
-                [[1, 0], [0, 0], [0, -1], [-1, -1]],
+                [[1, 1], [0, 1], [0, 0], [-1, 0]],
                 [[0, -1], [0, 0], [-1, 0], [-1, 1]]
             ]]
     }
@@ -123,8 +123,8 @@ class Type {
     rotate() {
         game.playable.rotation = (game.playable.rotation + 1) % 4
         for (let k = 0; k < game.playBlocks.length; k++) {
-            game.playBlocks[k].x=game.playable.x+this.shapes[game.playable.type][game.playable.rotation][k][0]
-            game.playBlocks[k].y=game.playable.y+this.shapes[game.playable.type][game.playable.rotation][k][1]
+            game.playBlocks[k].x = game.playable.x + this.shapes[game.playable.type][game.playable.rotation][k][0]
+            game.playBlocks[k].y = game.playable.y + this.shapes[game.playable.type][game.playable.rotation][k][1]
         }
     }
 }
@@ -134,7 +134,7 @@ class Game {
     constructor() {
         this.map = new Map()
         this.type = new Type()
-        this.playable={
+        this.playable = {
             x: 4,
             y: 0,
             type: null,
@@ -171,7 +171,7 @@ window.onload = function () {
                 }
             }
             if (nextMove === true) {
-                game.playable.x+=dx
+                game.playable.x += dx
                 for (let k of game.playBlocks) {
                     k.x = k.x + dx
                 }
@@ -198,11 +198,11 @@ window.onload = function () {
     });
 }
 
-function setPlayable(){
-    game.playable.x=4;
-    game.playable.y=0;
-    game.playable.type=null;
-    game.playable.rotation=0
+function setPlayable() {
+    game.playable.x = 4;
+    game.playable.y = 0;
+    game.playable.type = null;
+    game.playable.rotation = 0
 }
 
 // canvasの作成
@@ -247,7 +247,7 @@ function background() {
     ctx.fillStyle = "black"
     ctx.font = "50px serif"
     // ctx.fillText(("score:" + game.score), (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 1)))
-    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY +1)))
+    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 1)))
 }
 
 function blocks() {
@@ -268,7 +268,7 @@ function blocks() {
 }
 
 function playable() {
-    game.playable.y+=game.speed/fps
+    game.playable.y += game.speed / fps
     for (let k of game.playBlocks) {
         k.y += game.speed / fps  // y軸に常に移動
         k.draw(ctx)  // 今動かしているblockを描写
@@ -304,48 +304,43 @@ function put() {
 }
 
 // lineを消し、colorを動かさせる
-function clearBlock(){
-    for(let k of game.playBlocks){
-        if(k.color===-1) continue;
-        let lineClearable=true
+function clearBlock() {
+    for (let k of game.playBlocks) {
+        if (k.color === -1) continue;
+        let lineClearable = true
         let y = Math.floor(k.y)
-        console.log(y)
         for (let x = 0; x < game.map.lengthX; x++) {
-            console.log(x)
-            console.log(game.map.tileAt(x, y))
             if (game.map.tileAt(x, y) === 0) {
                 lineClearable = false
             }
         }
-        console.log(lineClearable)
         if (lineClearable === true) {
             clearColor(k)
             game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
             for (let m = 0; m < game.map.lengthX; m++) {
                 game.map.tiles.unshift(0)
             }
-            for(let n=0;n<game.playBlocks.length;n++){
-                if(game.playBlocks[n].y===y){
-                    game.playBlocks[n].color=-1
+            for (let n = 0; n < game.playBlocks.length; n++) {
+                if (game.playBlocks[n].y === y) {
+                    game.playBlocks[n].color = -1
                 }
             }
             game.score += game.map.lengthX
-        }else if(lineClearable === false){
+        } else if (lineClearable === false) {
             clearColor(k)
         }
     }
     blocks()
 }
 
-let doClear=true
-function clearColor(k){
-    console.log(doClear)
-    if(doClear===false || k.color===-1) return;
-    doClear=false
+let doClear = true
+function clearColor(k) {
+    if (doClear === false || k.color === -1) return;
+    doClear = false
     let x = k.x
     let y = Math.floor(k.y)
-    if(game.map.tileAt(x,y)===0){
-        doClear=true
+    if (game.map.tileAt(x, y) === 0) {
+        doClear = true
         return
     }
     let sameColor = [[x, y]]
@@ -370,7 +365,6 @@ function clearColor(k){
                 }
             }
         }
-        console.log(sameColor)
     }
     if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
         for (let l = 0; l < sameColor.length; l++) {
@@ -378,21 +372,21 @@ function clearColor(k){
         }
         game.score += sameColor.length
 
-        let clear=false
-        for(let m of game.playBlocks){
-            clear=false
-            for(let n of sameColor){
-                if(m.x===n[0]&&n.y===n[1]){
-                    clear=true
+        let clear = false
+        for (let m of game.playBlocks) {
+            clear = false
+            for (let n of sameColor) {
+                if (m.x === n[0] && n.y === n[1]) {
+                    clear = true
                     break
                 }
             }
-            if(clear===true){
-                m.color=-1
+            if (clear === true) {
+                m.color = -1
             }
         }
     }
-    doClear=true
+    doClear = true
 }
 
 function isContinue() {
@@ -412,15 +406,15 @@ function gameover() {
     ctx.fillStyle = "black"
     ctx.font = "50px serif"
     // ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
-    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY +2)))
+    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 2)))
 }
 
 // lineClear,colorClearは現在未使用
 function lineClear() {
-    for(let k=0;k<game.playBlocks.length;k++){
-        if(game.playBlocks[k]!==null){
+    for (let k = 0; k < game.playBlocks.length; k++) {
+        if (game.playBlocks[k] !== null) {
             let clearable = true
-            let x=game.playBlocks[k].x
+            let x = game.playBlocks[k].x
             let y = Math.floor(game.playBlocks[k].y)
             for (let x = 0; x < game.map.lengthX; x++) {
                 if (game.map.tileAt(x, y) === 0) {
@@ -432,9 +426,9 @@ function lineClear() {
                 for (let k = 0; k < game.map.lengthX; k++) {
                     game.map.tiles.unshift(0)
                 }
-                for(let m=0;m<game.playBlocks.length;m++){
-                    if(game.playBlocks[m].y===y){
-                        game.playBlocks[m].color=-1
+                for (let m = 0; m < game.playBlocks.length; m++) {
+                    if (game.playBlocks[m].y === y) {
+                        game.playBlocks[m].color = -1
                     }
                 }
                 game.score += game.map.lengthX
@@ -464,10 +458,10 @@ function lineClear() {
 }
 // let doClear=true
 function colorClear() {
-    if(doClear===false) return;
-    for(let k=0;k<game.playBlocks.length;k++){
-        doClear=false
-        if(game.playBlocks[k].color!==-1){
+    if (doClear === false) return;
+    for (let k = 0; k < game.playBlocks.length; k++) {
+        doClear = false
+        if (game.playBlocks[k].color !== -1) {
             let x = game.playBlocks[k].x
             let y = Math.floor(game.playBlocks[k].y)
             let sameColor = [[x, y]]
@@ -500,23 +494,23 @@ function colorClear() {
                 }
                 game.score += sameColor.length
 
-                let clear=false
-                for(let m=0;m<game.playBlocks.length;m++){
-                    clear=false
-                    for(let n=0;n<sameColor.length;n++){
-                        if(game.playBlocks[m].x===sameColor[n][0] &&Math.floor(game.playBlocks[m].y)===sameColor[n][1]){
-                            clear=true
+                let clear = false
+                for (let m = 0; m < game.playBlocks.length; m++) {
+                    clear = false
+                    for (let n = 0; n < sameColor.length; n++) {
+                        if (game.playBlocks[m].x === sameColor[n][0] && Math.floor(game.playBlocks[m].y) === sameColor[n][1]) {
+                            clear = true
                             break
                         }
                     }
-                    if(clear===true){
-                        game.playBlocks[m].color=-1
+                    if (clear === true) {
+                        game.playBlocks[m].color = -1
                     }
                 }
             }
         }
     }
-    doClear=true
+    doClear = true
 
     /*
     for (let n of game.playBlocks) {
