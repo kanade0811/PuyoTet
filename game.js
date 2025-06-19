@@ -53,7 +53,6 @@ class Block {
     /**
     * @param {number} x blockの初期X
     * @param {number} y blockの初期Y
-    * @param {number} type blockの種類
     */
     constructor(x, y) {
         this.x = x;
@@ -194,7 +193,6 @@ window.onload = function () {
     // 上が押されたら回転
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyW") {
-            console.log("preesed keyW")
             game.type.rotate()
         }
     });
@@ -213,8 +211,6 @@ const ctx = canvas.getContext("2d")
 
 // 1フレームごとに描写する
 function draw() {
-    console.log(game.playBlocks)
-
     clear()
     background()
     blocks()
@@ -222,8 +218,9 @@ function draw() {
 
     if (putOrNot() === true) {
         put()
-        lineClear()
-        colorClear()
+        clearBlock()
+        // lineClear()
+        // colorClear()
         if (!isContinue()) {
             gameover()
         }
@@ -231,7 +228,7 @@ function draw() {
 }
 
 function clear() {
-    ctx.clearRect(0, 0, 1000, 750)
+    ctx.clearRect(0, 0, 1000, 1000)
 }
 
 function background() {
@@ -249,7 +246,8 @@ function background() {
     // スコアの描写
     ctx.fillStyle = "black"
     ctx.font = "50px serif"
-    ctx.fillText(("score:" + game.score), (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 1)))
+    // ctx.fillText(("score:" + game.score), (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 1)))
+    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY +1)))
 }
 
 function blocks() {
@@ -275,12 +273,6 @@ function playable() {
         k.y += game.speed / fps  // y軸に常に移動
         k.draw(ctx)  // 今動かしているblockを描写
     }
-}
-
-function gameover() {
-    ctx.fillStyle = "black"
-    ctx.font = "50px serif"
-    ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
 }
 
 const defaultSpeed = 1
@@ -311,6 +303,119 @@ function put() {
     blocks()
 }
 
+// lineを消し、colorを動かさせる
+function clearBlock(){
+    for(let k of game.playBlocks){
+        if(k.color===-1) continue;
+        let lineClearable=true
+        let y = Math.floor(k.y)
+        console.log(y)
+        for (let x = 0; x < game.map.lengthX; x++) {
+            console.log(x)
+            console.log(game.map.tileAt(x, y))
+            if (game.map.tileAt(x, y) === 0) {
+                lineClearable = false
+            }
+        }
+        console.log(lineClearable)
+        if (lineClearable === true) {
+            clearColor(k)
+            game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
+            for (let m = 0; m < game.map.lengthX; m++) {
+                game.map.tiles.unshift(0)
+            }
+            for(let n=0;n<game.playBlocks.length;n++){
+                if(game.playBlocks[n].y===y){
+                    game.playBlocks[n].color=-1
+                }
+            }
+            game.score += game.map.lengthX
+        }else if(lineClearable === false){
+            clearColor(k)
+        }
+    }
+    blocks()
+}
+
+let doClear=true
+function clearColor(k){
+    console.log(doClear)
+    if(doClear===false || k.color===-1) return;
+    doClear=false
+    let x = k.x
+    let y = Math.floor(k.y)
+    if(game.map.tileAt(x,y)===0){
+        doClear=true
+        return
+    }
+    let sameColor = [[x, y]]
+    for (let l = 0; l < sameColor.length; l++) {
+        let base = sameColor[l]
+        let search = [
+            [base[0], base[1] - 1],
+            [base[0] - 1, base[1]],
+            [base[0], base[1] + 1],
+            [base[0] + 1, base[1]]
+        ]
+        for (let m = 0; m < search.length; m++) {   // 同じ色かつsameColorに無い座標だったら追加
+            if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[m][0], search[m][1])) {
+                let exist = true
+                for (let n = 0; n < sameColor.length; n++) {
+                    if (search[m][0] === sameColor[n][0] && search[m][1] === sameColor[n][1]) {
+                        exist = false
+                    }
+                }
+                if (exist === true) {
+                    sameColor.push(search[m])
+                }
+            }
+        }
+        console.log(sameColor)
+    }
+    if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
+        for (let l = 0; l < sameColor.length; l++) {
+            game.map.tiles[game.map.tileNumber(sameColor[l][0], sameColor[l][1])] = 0
+        }
+        game.score += sameColor.length
+
+        let clear=false
+        for(let m of game.playBlocks){
+            clear=false
+            for(let n of sameColor){
+                if(m.x===n[0]&&n.y===n[1]){
+                    clear=true
+                    break
+                }
+            }
+            if(clear===true){
+                m.color=-1
+            }
+        }
+    }
+    doClear=true
+}
+
+function isContinue() {
+    if (game.map.tileAt(4, 0) === 0) {
+        game.playBlocks = []
+        setPlayable()
+        game.playable.type = Math.floor(Math.random() * 7)
+        game.type.create(game.playable.type)
+        return true
+    } else {
+        clearInterval(game.gameInterval)
+        return false
+    }
+}
+
+function gameover() {
+    ctx.fillStyle = "black"
+    ctx.font = "50px serif"
+    // ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
+    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY +2)))
+}
+
+// lineClear,colorClearは現在未使用
 function lineClear() {
     for(let k=0;k<game.playBlocks.length;k++){
         if(game.playBlocks[k]!==null){
@@ -329,7 +434,7 @@ function lineClear() {
                 }
                 for(let m=0;m<game.playBlocks.length;m++){
                     if(game.playBlocks[m].y===y){
-                        game.playBlocks[m]=null
+                        game.playBlocks[m].color=-1
                     }
                 }
                 game.score += game.map.lengthX
@@ -357,10 +462,12 @@ function lineClear() {
     }
     */
 }
-
+// let doClear=true
 function colorClear() {
+    if(doClear===false) return;
     for(let k=0;k<game.playBlocks.length;k++){
-        if(game.playBlocks[k]!==null){
+        doClear=false
+        if(game.playBlocks[k].color!==-1){
             let x = game.playBlocks[k].x
             let y = Math.floor(game.playBlocks[k].y)
             let sameColor = [[x, y]]
@@ -397,18 +504,19 @@ function colorClear() {
                 for(let m=0;m<game.playBlocks.length;m++){
                     clear=false
                     for(let n=0;n<sameColor.length;n++){
-                        if(game.playBlocks[m].x===sameColor[n][0] &&game.playBlocks[m].y===sameColor[n][1]){
+                        if(game.playBlocks[m].x===sameColor[n][0] &&Math.floor(game.playBlocks[m].y)===sameColor[n][1]){
                             clear=true
                             break
                         }
                     }
                     if(clear===true){
-                        game.playBlocks[m]=null
+                        game.playBlocks[m].color=-1
                     }
                 }
             }
         }
     }
+    doClear=true
 
     /*
     for (let n of game.playBlocks) {
@@ -446,17 +554,4 @@ function colorClear() {
         }
     }
     */
-}
-
-function isContinue() {
-    if (game.map.tileAt(4, 0) === 0) {
-        game.playBlocks = []
-        setPlayable()
-        game.playable.type = Math.floor(Math.random() * 7)
-        game.type.create(game.playable.type)
-        return true
-    } else {
-        clearInterval(game.gameInterval)
-        return false
-    }
 }
