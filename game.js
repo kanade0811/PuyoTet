@@ -121,11 +121,44 @@ class Type {
         }
     }
     rotate() {
+        console.log("do rotate")
         game.playable.rotation = (game.playable.rotation + 1) % 4
+        let nextX = []
+        for (let k = 0; k < game.playBlocks.length; k++) {
+            nextX.push(game.playable.x + this.shapes[game.playable.type][game.playable.rotation][k][0])
+        }
+        console.log(nextX)
+        let max = -1
+        let min = game.map.lengthX + 1
+        for (let k = 0; k < nextX.length; k++) {
+            if (nextX[k] > max) {
+                max = nextX[k]
+            } else if (nextX[k] < min) {
+                min = nextX[k]
+            }
+        }
+        console.log(min, max)
+        if (min < 0) {
+            for (let k = 0; k < nextX.length; k++) {
+                nextX[k]++
+            }
+        } else if (max >= game.map.lengthX) {
+            console.log("do")
+            for (let k = 0; k < nextX.length; k++) {
+                nextX[k]--
+            }
+        }
+        console.log(nextX)
+        for (let k = 0; k < game.playBlocks.length; k++) {
+            game.playBlocks[k].x = nextX[k]
+            game.playBlocks[k].y = game.playable.y + this.shapes[game.playable.type][game.playable.rotation][k][1]
+        }
+        /*
         for (let k = 0; k < game.playBlocks.length; k++) {
             game.playBlocks[k].x = game.playable.x + this.shapes[game.playable.type][game.playable.rotation][k][0]
             game.playBlocks[k].y = game.playable.y + this.shapes[game.playable.type][game.playable.rotation][k][1]
         }
+        */
     }
 }
 
