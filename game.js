@@ -60,13 +60,23 @@ class Block {
         this.color = Math.floor(Math.random() * 5 + 1)
     }
     draw(ctx) {
+        if(this.y<=-1) return;
         ctx.fillStyle = game.map.tileColors[this.color]
+        if(0<=this.y){
             ctx.fillRect(
                 this.x * width,
                 this.y * width,
                 width,
                 width
             )
+        }else if(-1<this.y && this.y<0){
+            ctx.fillRect(
+                this.x*width,
+                0*width,
+                width,
+                (1+this.y)*width
+            )
+        }
     }
 }
 
