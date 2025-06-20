@@ -61,12 +61,12 @@ class Block {
     }
     draw(ctx) {
         ctx.fillStyle = game.map.tileColors[this.color]
-        ctx.fillRect(
-            this.x * width,
-            this.y * width,
-            width,
-            width
-        )
+            ctx.fillRect(
+                this.x * width,
+                this.y * width,
+                width,
+                width
+            )
     }
 }
 
@@ -121,13 +121,11 @@ class Type {
         }
     }
     rotate() {
-        console.log("do rotate")
         game.playable.rotation = (game.playable.rotation + 1) % 4
         let nextX = []
         for (let k = 0; k < game.playBlocks.length; k++) {
             nextX.push(game.playable.x + this.shapes[game.playable.type][game.playable.rotation][k][0])
         }
-        console.log(nextX)
         let max = -1
         let min = game.map.lengthX + 1
         for (let k = 0; k < nextX.length; k++) {
@@ -137,28 +135,19 @@ class Type {
                 min = nextX[k]
             }
         }
-        console.log(min, max)
         if (min < 0) {
             for (let k = 0; k < nextX.length; k++) {
                 nextX[k]++
             }
         } else if (max >= game.map.lengthX) {
-            console.log("do")
             for (let k = 0; k < nextX.length; k++) {
                 nextX[k]--
             }
         }
-        console.log(nextX)
         for (let k = 0; k < game.playBlocks.length; k++) {
             game.playBlocks[k].x = nextX[k]
             game.playBlocks[k].y = game.playable.y + this.shapes[game.playable.type][game.playable.rotation][k][1]
         }
-        /*
-        for (let k = 0; k < game.playBlocks.length; k++) {
-            game.playBlocks[k].x = game.playable.x + this.shapes[game.playable.type][game.playable.rotation][k][0]
-            game.playBlocks[k].y = game.playable.y + this.shapes[game.playable.type][game.playable.rotation][k][1]
-        }
-        */
     }
 }
 
@@ -186,7 +175,8 @@ window.onload = function () {
     game = new Game();
     // ゲーム開始時に上真ん中にランダムなblockを配置
     setPlayable()
-    game.playable.type = Math.floor(Math.random() * 7)
+    // game.playable.type = Math.floor(Math.random() * 7)
+    game.playable.type =0
     game.type.create(game.playable.type)
 
     // 左右が押されたら瞬時に移動
@@ -227,6 +217,7 @@ window.onload = function () {
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyW") {
             game.type.rotate()
+            console.log(game.playBlocks)
         }
     });
 }
@@ -251,7 +242,7 @@ function draw() {
 
     if (putOrNot() === true) {
         put()
-        clearBlock()
+        clearBlocks()
         // lineClear()
         // colorClear()
         if (!isContinue()) {
@@ -266,7 +257,7 @@ function clear() {
 
 function background() {
     // 背景色
-    ctx.fillStyle = "orange"
+    ctx.fillStyle = "white"
     ctx.fillRect(0, 0, 500, 750)
 
     // マス目
@@ -336,34 +327,53 @@ function put() {
     blocks()
 }
 
+function clearBlocks(){
+    for(let k of game.playBlocks){
+        clearLine(k)
+    }
+}
+
 // lineを消し、colorを動かさせる
-function clearBlock() {
-    for (let k of game.playBlocks) {
-        if (k.color === -1) continue;
-        let lineClearable = true
-        let y = Math.floor(k.y)
-        for (let x = 0; x < game.map.lengthX; x++) {
-            if (game.map.tileAt(x, y) === 0) {
-                lineClearable = false
-            }
-        }
-        if (lineClearable === true) {
-            clearColor(k)
-            game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
-            for (let m = 0; m < game.map.lengthX; m++) {
-                game.map.tiles.unshift(0)
-            }
-            for (let n = 0; n < game.playBlocks.length; n++) {
-                if (game.playBlocks[n].y === y) {
-                    game.playBlocks[n].color = -1
-                }
-            }
-            game.score += game.map.lengthX
-        } else if (lineClearable === false) {
-            clearColor(k)
+function clearLine(k) {
+    if (k.color === -1) return;
+    let lineClearable = true
+    let y = Math.floor(k.y)
+    for (let x = 0; x < game.map.lengthX; x++) {
+        if (game.map.tileAt(x, y) === 0) {
+            lineClearable = false
         }
     }
+    if (lineClearable === true) {
+        clearColor(k)
+        game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
+        for (let m = 0; m < game.map.lengthX; m++) {
+            game.map.tiles.unshift(0)
+        }
+        for (let n = 0; n < game.playBlocks.length; n++) {
+            if (game.playBlocks[n].y === y) {
+                game.playBlocks[n].color = -1
+            }
+        }
+        game.score += game.map.lengthX
+        createBlocks(y)
+    } else if (lineClearable === false) {
+        clearColor(k)
+    }
     blocks()
+}
+
+function createBlocks(Y){
+    let clear=[]
+    for(let X=0;X<game.map.lengthX;X++){
+        clear.push({
+            x:X,
+            y:Y,
+            color:game.map.tileAt(X,Y)
+        })
+    }
+    for(let k of clear){
+        clearLine(k)
+    }
 }
 
 let doClear = true
@@ -439,7 +449,7 @@ function gameover() {
     ctx.fillStyle = "black"
     ctx.font = "50px serif"
     // ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
-    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 2)))
+    ctx.fillText("game over", 0, (width * (game.map.lengthY + 2)))
 }
 
 // lineClear,colorClearは現在未使用
@@ -489,6 +499,7 @@ function lineClear() {
     }
     */
 }
+
 // let doClear=true
 function colorClear() {
     if (doClear === false) return;
