@@ -55,18 +55,28 @@ class Block {
     * @param {number} y blockの初期Y
     */
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
+        this.x = x
+        this.y = y
         this.color = Math.floor(Math.random() * 5 + 1)
     }
     draw(ctx) {
+        if(this.y<=-1) return
         ctx.fillStyle = game.map.tileColors[this.color]
+        if (0 <= this.y) {
             ctx.fillRect(
                 this.x * width,
                 this.y * width,
                 width,
                 width
             )
+        } else{
+            ctx.fillRect(
+                this.x * width,
+                0 * width,
+                width,
+                (1 + this.y) * width
+            )
+        }
     }
 }
 
@@ -135,13 +145,25 @@ class Type {
                 min = nextX[k]
             }
         }
-        if (min < 0) {
+        if (min === -2) {
+            for (let k = 0; k < nextX.length; k++) {
+                for (let l = 0; l < 2; l++) {
+                    nextX[k]++
+                }
+            }
+        } else if (min === -1) {
             for (let k = 0; k < nextX.length; k++) {
                 nextX[k]++
             }
-        } else if (max >= game.map.lengthX) {
+        } else if (max === game.map.lengthX) {
             for (let k = 0; k < nextX.length; k++) {
                 nextX[k]--
+            }
+        } else if (max === game.map.lengthX + 1) {
+            for (let k = 0; k < nextX.length; k++) {
+                for (let l = 0; l < 2; l++) {
+                    nextX[k]--
+                }
             }
         }
         for (let k = 0; k < game.playBlocks.length; k++) {
@@ -168,22 +190,22 @@ class Game {
         this.speed = 1
     }
 }
-let game;
+let game
 
 window.onload = function () {
 
-    game = new Game();
+    game = new Game()
     // ゲーム開始時に上真ん中にランダムなblockを配置
     setPlayable()
     // game.playable.type = Math.floor(Math.random() * 7)
-    game.playable.type =0
+    game.playable.type = 0
     game.type.create(game.playable.type)
 
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyA" || event.code === "KeyD") {
-            let move = { KeyA: -1, KeyD: 1 };
-            let dx = move[event.code];
+            let move = { KeyA: -1, KeyD: 1 }
+            let dx = move[event.code]
             let nextMove = true
             for (let k of game.playBlocks) {
                 if (dx !== undefined) {
@@ -200,26 +222,25 @@ window.onload = function () {
                 }
             }
         }
-    });
+    })
     // 下が押されたら落下速度上昇
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyS") {
             setSpeed(1)
         }
-    });
+    })
     // 下が離されたら落下速度を元に戻す
     document.addEventListener("keyup", (event) => {
         if (event.code === "KeyS") {
             setSpeed(0)
         }
-    });
+    })
     // 上が押されたら回転
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyW") {
             game.type.rotate()
-            console.log(game.playBlocks)
         }
-    });
+    })
 }
 
 function setPlayable() {
@@ -306,13 +327,17 @@ function setSpeed(keydown) {
 }
 
 function putOrNot() {
-    if (game.playBlocks.length === 0) return;
+    if (game.playBlocks.length === 0) return
     let putable = false
     for (let k of game.playBlocks) {
         let x = k.x
         let y = Math.floor(k.y)
-        if (y + 1 >= game.map.lengthY || game.map.tileAt(x, y + 1) !== 0) {
+        if(y===-2){
+            continue
+        }
+        if (y + 1 >= game.map.lengthY || y === -2 || game.map.tileAt(x, y + 1) !== 0) {
             putable = true
+            break
         }
     }
     return putable
@@ -327,15 +352,15 @@ function put() {
     blocks()
 }
 
-function clearBlocks(){
-    for(let k of game.playBlocks){
+function clearBlocks() {
+    for (let k of game.playBlocks) {
         clearLine(k)
     }
 }
 
 // lineを消し、colorを動かさせる
 function clearLine(k) {
-    if (k.color === -1) return;
+    if (k.color === -1) return
     let lineClearable = true
     let y = Math.floor(k.y)
     for (let x = 0; x < game.map.lengthX; x++) {
@@ -362,23 +387,23 @@ function clearLine(k) {
     blocks()
 }
 
-function createBlocks(Y){
-    let clear=[]
-    for(let X=0;X<game.map.lengthX;X++){
+function createBlocks(Y) {
+    let clear = []
+    for (let X = 0; X < game.map.lengthX; X++) {
         clear.push({
-            x:X,
-            y:Y,
-            color:game.map.tileAt(X,Y)
+            x: X,
+            y: Y,
+            color: game.map.tileAt(X, Y)
         })
     }
-    for(let k of clear){
+    for (let k of clear) {
         clearLine(k)
     }
 }
 
 let doClear = true
 function clearColor(k) {
-    if (doClear === false || k.color === -1) return;
+    if (doClear === false || k.color === -1) return
     doClear = false
     let x = k.x
     let y = Math.floor(k.y)
@@ -502,7 +527,7 @@ function lineClear() {
 
 // let doClear=true
 function colorClear() {
-    if (doClear === false) return;
+    if (doClear === false) return
     for (let k = 0; k < game.playBlocks.length; k++) {
         doClear = false
         if (game.playBlocks[k].color !== -1) {
