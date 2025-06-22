@@ -197,8 +197,7 @@ window.onload = function () {
     game = new Game()
     // ゲーム開始時に上真ん中にランダムなblockを配置
     setPlayable()
-    // game.playable.type = Math.floor(Math.random() * 7)
-    game.playable.type = 0
+    game.playable.type = Math.floor(Math.random() * 7)
     game.type.create(game.playable.type)
 
     // 左右が押されたら瞬時に移動
@@ -264,8 +263,6 @@ function draw() {
     if (putOrNot() === true) {
         put()
         clearBlocks()
-        // lineClear()
-        // colorClear()
         if (!isContinue()) {
             gameover()
         }
@@ -475,146 +472,4 @@ function gameover() {
     ctx.font = "50px serif"
     // ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
     ctx.fillText("game over", 0, (width * (game.map.lengthY + 2)))
-}
-
-// lineClear,colorClearは現在未使用
-function lineClear() {
-    for (let k = 0; k < game.playBlocks.length; k++) {
-        if (game.playBlocks[k] !== null) {
-            let clearable = true
-            let x = game.playBlocks[k].x
-            let y = Math.floor(game.playBlocks[k].y)
-            for (let x = 0; x < game.map.lengthX; x++) {
-                if (game.map.tileAt(x, y) === 0) {
-                    clearable = false
-                }
-            }
-            if (clearable === true) {
-                game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
-                for (let k = 0; k < game.map.lengthX; k++) {
-                    game.map.tiles.unshift(0)
-                }
-                for (let m = 0; m < game.playBlocks.length; m++) {
-                    if (game.playBlocks[m].y === y) {
-                        game.playBlocks[m].color = -1
-                    }
-                }
-                game.score += game.map.lengthX
-            }
-        }
-    }
-
-    /*
-    for (let k of game.playBlocks) {
-        let clearable = true
-        let y = Math.floor(k.y)
-        for (let x = 0; x < game.map.lengthX; x++) {
-            if (game.map.tileAt(x, y) === 0) {
-                clearable = false
-            }
-        }
-        if (clearable === true) {
-            game.map.tiles.splice(game.map.tileNumber(0, y), game.map.lengthX)
-            for (let k = 0; k < game.map.lengthX; k++) {
-                game.map.tiles.unshift(0)
-            }
-            game.playBlocks
-            game.score += game.map.lengthX
-        }
-    }
-    */
-}
-
-// let doClear=true
-function colorClear() {
-    if (doClear === false) return
-    for (let k = 0; k < game.playBlocks.length; k++) {
-        doClear = false
-        if (game.playBlocks[k].color !== -1) {
-            let x = game.playBlocks[k].x
-            let y = Math.floor(game.playBlocks[k].y)
-            let sameColor = [[x, y]]
-            for (let k = 0; k < sameColor.length; k++) {
-                let base = sameColor[k]
-                let search = [
-                    [base[0], base[1] - 1],
-                    [base[0] - 1, base[1]],
-                    [base[0], base[1] + 1],
-                    [base[0] + 1, base[1]]
-                ]
-                for (let m = 0; m < search.length; m++) {   // 同じ色かつsameColorに無い座標だったら追加
-                    if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[m][0], search[m][1])) {
-                        let exist = true
-                        for (let n = 0; n < sameColor.length; n++) {
-                            if (search[m][0] === sameColor[n][0] && search[m][1] === sameColor[n][1]) {
-                                exist = false
-                            }
-                        }
-                        if (exist === true) {
-                            sameColor.push(search[m])
-                        }
-                    }
-                }
-            }
-
-            if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
-                for (let k = 0; k < sameColor.length; k++) {
-                    game.map.tiles[game.map.tileNumber(sameColor[k][0], sameColor[k][1])] = 0
-                }
-                game.score += sameColor.length
-
-                let clear = false
-                for (let m = 0; m < game.playBlocks.length; m++) {
-                    clear = false
-                    for (let n = 0; n < sameColor.length; n++) {
-                        if (game.playBlocks[m].x === sameColor[n][0] && Math.floor(game.playBlocks[m].y) === sameColor[n][1]) {
-                            clear = true
-                            break
-                        }
-                    }
-                    if (clear === true) {
-                        game.playBlocks[m].color = -1
-                    }
-                }
-            }
-        }
-    }
-    doClear = true
-
-    /*
-    for (let n of game.playBlocks) {
-        let x = n.x
-        let y = Math.floor(n.y)
-        let sameColor = [[x, y]]
-        for (let k = 0; k < sameColor.length; k++) {
-            let base = sameColor[k]
-            let search = [
-                [base[0], base[1] - 1],
-                [base[0] - 1, base[1]],
-                [base[0], base[1] + 1],
-                [base[0] + 1, base[1]]
-            ]
-            for (let l = 0; l < search.length; l++) {   // 同じ色かつsameColorに無い座標だったら追加
-                if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[l][0], search[l][1])) {
-                    let exist = true
-                    for (let m = 0; m < sameColor.length; m++) {
-                        if (search[l][0] === sameColor[m][0] && search[l][1] === sameColor[m][1]) {
-                            exist = false
-                        }
-                    }
-                    if (exist === true) {
-                        sameColor.push(search[l])
-                    }
-                }
-            }
-        }
-
-        if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
-            for (let k = 0; k < sameColor.length; k++) {
-                game.map.tiles[game.map.tileNumber(sameColor[k][0], sameColor[k][1])] = 0
-            }
-            game.score += sameColor.length
-        }
-    }
-    */
 }
