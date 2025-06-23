@@ -59,7 +59,7 @@ class Block {
         this.color = Math.floor(Math.random() * 5 + 1)
     }
     draw(ctx) {
-        if(this.y<=-1) return
+        if (this.y <= -1) return
         ctx.fillStyle = game.map.tileColors[this.color]
         if (0 <= this.y) {
             ctx.fillRect(
@@ -68,7 +68,7 @@ class Block {
                 width,
                 width
             )
-        } else{
+        } else {
             ctx.fillRect(
                 this.x * width,
                 0 * width,
@@ -328,7 +328,7 @@ function putOrNot() {
     for (let k of game.playBlocks) {
         let x = k.x
         let y = Math.floor(k.y)
-        if(y===-2){
+        if (y === -2) {
             continue
         }
         if (y + 1 >= game.map.lengthY || game.map.tileAt(x, y + 1) !== 0) {
@@ -383,6 +383,7 @@ function clearLine(k) {
     blocks()
 }
 
+// lineで消した後のcolor判定
 function createBlocks(Y) {
     let clear = []
     for (let X = 0; X < game.map.lengthX; X++) {
@@ -393,7 +394,7 @@ function createBlocks(Y) {
         })
     }
     for (let k of clear) {
-        clearLine(k)
+        clearColor(k)
     }
 }
 
@@ -432,7 +433,12 @@ function clearColor(k) {
     }
     if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
         for (let l = 0; l < sameColor.length; l++) {
-            game.map.tiles[game.map.tileNumber(sameColor[l][0], sameColor[l][1])] = 0
+            x = sameColor[l][0]
+            y = sameColor[l][1]
+            while (y > 0) {
+                game.map.tiles[game.map.tileNumber(x, y)] = game.map.tiles[game.map.tileNumber(x, y - 1)]
+                
+            }
         }
         game.score += sameColor.length
 
