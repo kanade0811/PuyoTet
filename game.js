@@ -24,7 +24,6 @@ class Map {
         ]
         this.lengthX = 10
         this.lengthY = 15
-
         this.tileColors = [
             null,
             "red",
@@ -318,7 +317,7 @@ function playable() {
 }
 
 const defaultSpeed = 1
-const incraseSpeed = 9
+const incraseSpeed = 8
 function setSpeed(keydown) {
     game.speed = defaultSpeed + incraseSpeed * keydown
 }
@@ -332,7 +331,7 @@ function putOrNot() {
         if(y===-2){
             continue
         }
-        if (y + 1 >= game.map.lengthY || y === -2 || game.map.tileAt(x, y + 1) !== 0) {
+        if (y + 1 >= game.map.lengthY || game.map.tileAt(x, y + 1) !== 0) {
             putable = true
             break
         }
