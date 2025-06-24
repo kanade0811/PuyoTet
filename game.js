@@ -399,6 +399,7 @@ function createBlocksY(Y) {
 }
 
 let doClear = true
+let Y;
 function clearColor(k) {
     if (doClear === false || k.color === -1) return
     doClear = false
@@ -449,22 +450,29 @@ function clearColor(k) {
         for (let l = 0; l < sameColor.length; l++) {
             x = sameColor[l][0]
             y = sameColor[l][1]
+            Y = sameColor[l][1]
             while (y > 0) {
-                y--
                 for (let m = 0; m < sameColor.length; m++) {
                     if (l === m) continue
                     if (x === sameColor[m][0] && y === sameColor[m][1]) y--
                 }
-                game.map.tiles[game.map.tileNumber(sameColor[l][0], sameColor[l][1])] = game.map.tiles[game.map.tileNumber(x, y)]
-                // console.log(game.map.tiles[119],game.map.tiles[129],game.map.tiles[139],game.map.tiles[149])
+                game.map.tiles[game.map.tileNumber(sameColor[l][0], Y)]
+                    = game.map.tiles[game.map.tileNumber(sameColor[l][0], y)]
+                Y--
+                y--
             }
         }
+        blocks()
         for (let l = 0; l < sameColor.length; l++) {
+            let doOrNot = true
             for (let m = 0; m < sameColor.length; m++) {
                 if (l === m) continue
-                if (sameColor[l][1] === sameColor[m][1]) break
+                if (sameColor[l][1] === sameColor[m][1]) {
+                    doOrNot = false
+                    break
+                }
             }
-            if (m === sameColor.length) {
+            if (doOrNot === true) {
                 createBlocksX(sameColor[l][0], sameColor[l][1])
             }
         }
