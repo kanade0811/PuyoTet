@@ -449,7 +449,7 @@ function clearColor(k) {
         // 色が揃った部分のみで落下判定
         for (let l = 0; l < sameColor.length; l++) {
             x = sameColor[l][0]
-            y = sameColor[l][1]
+            y = sameColor[l][1]-1
             Y = sameColor[l][1]
             while (y > 0) {
                 for (let m = 0; m < sameColor.length; m++) {
