@@ -241,6 +241,12 @@ window.onload = function () {
     })
 }
 
+const defaultSpeed = 1
+const incraseSpeed = 8
+function setSpeed(keydown) {
+    game.speed = defaultSpeed + incraseSpeed * keydown
+}
+
 function setPlayable() {
     game.playable.x = 4;
     game.playable.y = 0;
@@ -259,7 +265,7 @@ function draw() {
     blocks()
     playable()
 
-    if (putOrNot() === true) {
+    if (putOrNot()) {
         put()
         clearBlocks()
         if (!isContinue()) {
@@ -316,14 +322,8 @@ function playable() {
     }
 }
 
-const defaultSpeed = 1
-const incraseSpeed = 8
-function setSpeed(keydown) {
-    game.speed = defaultSpeed + incraseSpeed * keydown
-}
-
 function putOrNot() {
-    if (game.playBlocks.length === 0) return
+    if (game.playBlocks.length === 0) return false
     let putable = false
     for (let k of game.playBlocks) {
         let x = k.x
@@ -376,15 +376,15 @@ function clearLine(k) {
             }
         }
         game.score += game.map.lengthX
-        createBlocks(y)
+        createBlocksY(y)
     } else if (lineClearable === false) {
         clearColor(k)
     }
     blocks()
 }
 
-// lineで消した後のcolor判定
-function createBlocks(Y) {
+// lineで消した後のblockに対するcolor判定
+function createBlocksY(Y) {
     let clear = []
     for (let X = 0; X < game.map.lengthX; X++) {
         clear.push({
@@ -394,7 +394,7 @@ function createBlocks(Y) {
         })
     }
     for (let k of clear) {
-        clearColor(k)
+        clearLine(k)
     }
 }
 
@@ -409,6 +409,7 @@ function clearColor(k) {
         return
     }
     let sameColor = [[x, y]]
+    // 同じ色の隣同士を同じ色じゃないか調べる
     for (let l = 0; l < sameColor.length; l++) {
         let base = sameColor[l]
         let search = [
@@ -417,7 +418,8 @@ function clearColor(k) {
             [base[0], base[1] + 1],
             [base[0] + 1, base[1]]
         ]
-        for (let m = 0; m < search.length; m++) {   // 同じ色かつsameColorに無い座標だったら追加
+        // 基準のblockと同じ色かつsameColorに無い座標だったら配列に追加
+        for (let m = 0; m < search.length; m++) {
             if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[m][0], search[m][1])) {
                 let exist = true
                 for (let n = 0; n < sameColor.length; n++) {
@@ -431,32 +433,58 @@ function clearColor(k) {
             }
         }
     }
-    if (sameColor.length >= 4) {    // 4つ以上色が揃ったら0にしてScore加算
+    // 色が4つ以上揃ったら消す
+    if (sameColor.length >= 4) {
+        // ミノに消える色があったらcolor=-1
+        for (let m of game.playBlocks) {
+            for (let n of sameColor) {
+                if (m.x === n[0] && n.y === n[1]) {
+                    m.color = -1
+                    break
+                }
+            }
+        }
+        game.score += sameColor.length
+        // 色が揃った部分のみで落下判定
         for (let l = 0; l < sameColor.length; l++) {
             x = sameColor[l][0]
             y = sameColor[l][1]
             while (y > 0) {
-                game.map.tiles[game.map.tileNumber(x, y)] = game.map.tiles[game.map.tileNumber(x, y - 1)]
-                
+                y--
+                for (let m = 0; m < sameColor.length; m++) {
+                    if (l === m) continue
+                    if (x === sameColor[m][0] && y === sameColor[m][1]) y--
+                }
+                game.map.tiles[game.map.tileNumber(sameColor[l][0], sameColor[l][1])] = game.map.tiles[game.map.tileNumber(x, y)]
+                // console.log(game.map.tiles[119],game.map.tiles[129],game.map.tiles[139],game.map.tiles[149])
             }
         }
-        game.score += sameColor.length
-
-        let clear = false
-        for (let m of game.playBlocks) {
-            clear = false
-            for (let n of sameColor) {
-                if (m.x === n[0] && n.y === n[1]) {
-                    clear = true
-                    break
-                }
+        for (let l = 0; l < sameColor.length; l++) {
+            for (let m = 0; m < sameColor.length; m++) {
+                if (l === m) continue
+                if (sameColor[l][1] === sameColor[m][1]) break
             }
-            if (clear === true) {
-                m.color = -1
+            if (m === sameColor.length) {
+                createBlocksX(sameColor[l][0], sameColor[l][1])
             }
         }
     }
     doClear = true
+}
+
+// colorで消した後の落下したblockに対するcolor判定
+function createBlocksX(X, Y) {
+    let clear = []
+    for (Y; Y > 0; Y--) {
+        clear.push({
+            x: X,
+            y: Y,
+            color: game.map.tileAt(X, Y)
+        })
+    }
+    for (let k of clear) {
+        clearLine(k)
+    }
 }
 
 function isContinue() {
