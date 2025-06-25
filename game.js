@@ -79,7 +79,6 @@ class Block {
     }
     drawNext() {
         ctx.fillStyle = game.map.tileColors[this.color]
-        console.log(game.next.playable.type)
         ctx.fillRect(
             (this.x + game.map.lengthX - 2 + game.type.position[game.next.playable.type][0]) * width,
             (this.y + 1 + 1 / 2 + game.type.position[game.next.playable.type][1]) * width,
