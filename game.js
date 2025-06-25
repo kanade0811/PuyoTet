@@ -58,7 +58,7 @@ class Block {
         this.y = y
         this.color = Math.floor(Math.random() * 5 + 1)
     }
-    draw(ctx) {
+    draw() {
         if (this.y <= -1) return
         ctx.fillStyle = game.map.tileColors[this.color]
         if (0 <= this.y) {
@@ -76,6 +76,15 @@ class Block {
                 (1 + this.y) * width
             )
         }
+    }
+    drawNext(){
+        ctx.fillStyle = game.map.tileColors[this.color]
+        ctx.fillRect(
+            (this.x+3) * width,
+            (game.map.lengthY+this.y+1/2) * width,
+            width,
+            width
+        )
     }
 }
 
@@ -123,14 +132,14 @@ class Type {
     }
     create(type) {
         for (let k = 0; k < 4; k++) {
-            game.now.playBlocks[k] = new Block(
-                game.now.playable.x + this.shapes[type][0][k][0],
-                game.now.playable.y + this.shapes[type][0][k][1]
+            game.next.playBlocks[k] = new Block(
+                game.next.playable.x + this.shapes[type][0][k][0],
+                game.next.playable.y + this.shapes[type][0][k][1]
             )
         }
-        if (game.now.playBlocks[0].color === game.now.playBlocks[1].color
-            && game.now.playBlocks[0].color === game.now.playBlocks[2].color
-            && game.now.playBlocks[0].color === game.now.playBlocks[3].color) {
+        if (game.next.playBlocks[0].color === game.next.playBlocks[1].color
+            && game.next.playBlocks[0].color === game.next.playBlocks[2].color
+            && game.next.playBlocks[0].color === game.next.playBlocks[3].color) {
             setPlayable()
         }
     }
@@ -196,6 +205,16 @@ window.onload = function () {
 
     game = new Game()
     // ゲーム開始時に上真ん中にランダムなblockを配置
+    game.next={
+        playBlocks:[],
+        playable : {
+            x: 4,
+            y: 0,
+            type: Math.floor(Math.random() * 7),
+            rotation: 0
+        }
+    }
+    game.type.create(game.next.playable.type)
     setPlayable()
 
     // 左右が押されたら瞬時に移動
@@ -251,6 +270,21 @@ function setSpeed(keydown) {
 }
 
 function setPlayable() {
+    game.now=game.next
+    game.next={
+        playBlocks:[],
+        playable : {
+            x: 4,
+            y: 0,
+            type: Math.floor(Math.random() * 7),
+            rotation: 0
+        }
+    }
+    game.type.create(game.next.playable.type)
+}
+
+/*
+function setPlayable() {
     game.now={
         playBlocks:[],
         playable : {
@@ -262,6 +296,7 @@ function setPlayable() {
     }
     game.type.create(game.now.playable.type)
 }
+*/
 
 // canvasの作成
 const canvas = document.getElementById("canvas")
@@ -272,6 +307,7 @@ function draw() {
     clear()
     background()
     drawBlocks()
+    drawNext()
     playable()
 
     if (putOrNot()) {
@@ -323,11 +359,17 @@ function drawBlocks() {
     }
 }
 
+function drawNext(){
+    for(let k of game.next.playBlocks){
+        k.drawNext()
+    }
+}
+
 function playable() {
     game.now.playable.y += game.speed / fps
     for (let k of game.now.playBlocks) {
         k.y += game.speed / fps  // y軸に常に移動
-        k.draw(ctx)  // 今動かしているblockを描写
+        k.draw()  // 今動かしているblockを描写
     }
 }
 
