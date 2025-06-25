@@ -273,7 +273,7 @@ const ctx = canvas.getContext("2d")
 function draw() {
     clear()
     background()
-    blocks()
+    drawBlocks()
     playable()
 
     if (putOrNot()) {
@@ -308,7 +308,7 @@ function background() {
     ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 1)))
 }
 
-function blocks() {
+function drawBlocks() {
     for (let y = 0; y < game.map.lengthY; y++) {
         for (let x = 0; x < game.map.lengthX; x++) {
             let color = game.map.tileColors[game.map.tileAt(x, y)]
@@ -356,7 +356,7 @@ function put() {
         let y = Math.floor(k.y)
         game.map.tiles[game.map.tileNumber(x, y)] = k.color
     }
-    blocks()
+    drawBlocks()
 }
 
 function clearBlocks() {
@@ -373,6 +373,7 @@ function lineClear(k) {
     for (let x = 0; x < game.map.lengthX; x++) {
         if (game.map.tileAt(x, y) === 0) {
             lineClearable = false
+            break
         }
     }
     if (lineClearable === true) {
@@ -391,7 +392,7 @@ function lineClear(k) {
     } else if (lineClearable === false) {
         colorClearable(k)
     }
-    blocks()
+    drawBlocks()
 }
 
 // lineで消した後のblockに対するcolor判定
@@ -410,14 +411,10 @@ function createBlocksY(Y) {
 }
 
 function colorClearable(k) {
-    let doClear = true
-    let Y;
-    if (doClear === false || k.color === -1) return
-    doClear = false
+    if (k.color === -1) return
     let x = k.x
     let y = Math.floor(k.y)
     if (game.map.tileAt(x, y) === 0) {
-        doClear = true
         return
     }
     let sameColor = [[x, y]]
@@ -453,27 +450,11 @@ function colorClearable(k) {
 }
 
 function colorClear(sameColor) {
-    // y座標が大きい順に並び替える
-    let clearBlocks = []
-    for (let m = 0; m < sameColor.length; m++) {
-        if (m === 0) {
-            clearBlocks.push(sameColor[m])
-            continue
-        }
-        for (let n = 0; n < clearBlocks.length; n++) {
-            if (sameColor[m][1] >= clearBlocks[n][1]) {
-                clearBlocks.splice(n, 0, sameColor[m])
-                break
-            }
-        }
-        if (sameColor[m][1] < clearBlocks[clearBlocks.length - 1][1]) {
-            clearBlocks.push(sameColor[m])
-        }
-    }
-    // ミノに消える色があったらcolor=-1→他で処理しないようにする
+    let clearBlocks=makeClearBlocks(sameColor)
+    // ミノと消すblockが被っていたらcolor=-1として他で処理しないように
     for (let m of game.playBlocks) {
-        for (let n of sameColor) {
-            if (m.x === n[0] && n.y === n[1]) {
+        for (let n of clearBlocks) {
+            if (m.x === n[0] && m.y === n[1]) {
                 m.color = -1
                 break
             }
@@ -481,25 +462,43 @@ function colorClear(sameColor) {
     }
     game.score += sameColor.length
     dropBlocks(clearBlocks)
-    blocks()
-    // 消したblockに対して更に色を消す
-    for (let l = 0; l < sameColor.length; l++) {
-        doOrNot = true
-        for (let m = 0; m < sameColor.length; m++) {
-            if (l === m) continue
-            if (sameColor[l][1] === sameColor[m][1]) {
-                doOrNot = false
-                break
-            }
-        }
-        if (doOrNot === true) {
-            createBlocksX(sameColor[l][0], sameColor[l][1])
-        }
+    drawBlocks()
+    // 落下したblockに対して、異なるx座標の大きいyからcolorClearする
+    let clearedX=[]
+    for(let l=0;l<clearBlocks.length;l++){
+        // x軸が同じものは複数回実行しない
+        if(clearedX.includes(clearBlocks[l][0])===true) continue
+        clearedX.push(clearBlocks[l][0])
+        createBlocksX(clearBlocks[l][0],clearBlocks[l][1])
     }
 }
 
+// sameColorをy座標が大きい順に並び替えclearBlocksを作る
+function makeClearBlocks(sameColor){
+    let clearBlocks = []
+    for (let m = 0; m < sameColor.length; m++) {
+        // 最初は確定で配列に追加
+        if (m === 0) {
+            clearBlocks.push(sameColor[m])
+            continue
+        }
+        // 特定の場所のy以上ならその前に要素を追加
+        for (let n = 0; n < clearBlocks.length; n++) {
+            if (sameColor[m][1] >= clearBlocks[n][1]) {
+                clearBlocks.splice(n, 0, sameColor[m])
+                break
+            }
+        }
+        // もしy座標が一番小さかったら配列の最後に追加
+        if (sameColor[m][1] < clearBlocks[clearBlocks.length - 1][1]) {
+            clearBlocks.push(sameColor[m])
+        }
+    }
+    return clearBlocks
+}
+
+// 色が揃った部分のみで落下判定
 function dropBlocks(clearBlocks) {
-    // 色が揃った部分のみで落下判定
     let clearedX = []
     for (let l = 0; l < clearBlocks.length; l++) {
         // 同じx座標について1回だけ落下処理をする
@@ -508,7 +507,7 @@ function dropBlocks(clearBlocks) {
         clearedX.push(x)
         y = clearBlocks[l][1] - 1   // 変更元のblock
         Y = clearBlocks[l][1]     // 変更先のblock
-        while (y > 0) {
+        while (y >= 0) {
             for (let m = 0; m < clearBlocks.length; m++) {
                 // 配列内の同じblockは考えない
                 if (l === m) continue
@@ -520,13 +519,11 @@ function dropBlocks(clearBlocks) {
             Y--
             y--
         }
-        /*
         // 上にblockが無くなった場合は透明blockを追加
         while(Y>=0){
             game.map.tiles[game.map.tileNumber(x, Y)]=0
             Y--
         }
-        */
     }
 }
 
