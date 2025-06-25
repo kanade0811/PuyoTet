@@ -257,6 +257,7 @@ function setSpeed(keydown) {
 }
 
 function setPlayable() {
+    game.playBlocks = []
     game.playable.x = 4;
     game.playable.y = 0;
     game.playable.type = null;
@@ -544,7 +545,6 @@ function createBlocksX(X, Y) {
 
 function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
-        game.playBlocks = []
         setPlayable()
         return true
     } else {
