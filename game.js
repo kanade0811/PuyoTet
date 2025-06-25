@@ -123,22 +123,22 @@ class Type {
     }
     create(type) {
         for (let k = 0; k < 4; k++) {
-            game.playBlocks[k] = new Block(
-                game.playable.x + this.shapes[type][0][k][0],
-                game.playable.y + this.shapes[type][0][k][1]
+            game.now.playBlocks[k] = new Block(
+                game.now.playable.x + this.shapes[type][0][k][0],
+                game.now.playable.y + this.shapes[type][0][k][1]
             )
         }
-        if (game.playBlocks[0].color === game.playBlocks[1].color
-            && game.playBlocks[0].color === game.playBlocks[2].color
-            && game.playBlocks[0].color === game.playBlocks[3].color) {
+        if (game.now.playBlocks[0].color === game.now.playBlocks[1].color
+            && game.now.playBlocks[0].color === game.now.playBlocks[2].color
+            && game.now.playBlocks[0].color === game.now.playBlocks[3].color) {
             setPlayable()
         }
     }
     rotate() {
-        game.playable.rotation = (game.playable.rotation + 1) % 4
+        game.now.playable.rotation = (game.now.playable.rotation + 1) % 4
         let nextX = []
-        for (let k = 0; k < game.playBlocks.length; k++) {
-            nextX.push(game.playable.x + this.shapes[game.playable.type][game.playable.rotation][k][0])
+        for (let k = 0; k < game.now.playBlocks.length; k++) {
+            nextX.push(game.now.playable.x + this.shapes[game.now.playable.type][game.now.playable.rotation][k][0])
         }
         let max = -1
         let min = game.map.lengthX + 1
@@ -170,9 +170,9 @@ class Type {
                 }
             }
         }
-        for (let k = 0; k < game.playBlocks.length; k++) {
-            game.playBlocks[k].x = nextX[k]
-            game.playBlocks[k].y = game.playable.y + this.shapes[game.playable.type][game.playable.rotation][k][1]
+        for (let k = 0; k < game.now.playBlocks.length; k++) {
+            game.now.playBlocks[k].x = nextX[k]
+            game.now.playBlocks[k].y = game.now.playable.y + this.shapes[game.now.playable.type][game.now.playable.rotation][k][1]
         }
     }
 }
@@ -182,13 +182,7 @@ class Game {
     constructor() {
         this.map = new Map()
         this.type = new Type()
-        this.playable = {
-            x: 4,
-            y: 0,
-            type: null,
-            rotation: 0
-        }
-        this.playBlocks = []
+        this.now=null
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
         this.speed = 1
@@ -210,7 +204,7 @@ window.onload = function () {
             let move = { KeyA: -1, KeyD: 1 }
             let dx = move[event.code]
             let nextMove = true
-            for (let k of game.playBlocks) {
+            for (let k of game.now.playBlocks) {
                 if (dx !== undefined) {
                     let nextX = k.x + dx
                     if (!(0 <= nextX && nextX < game.map.lengthX)) {
@@ -219,8 +213,8 @@ window.onload = function () {
                 }
             }
             if (nextMove === true) {
-                game.playable.x += dx
-                for (let k of game.playBlocks) {
+                game.now.playable.x += dx
+                for (let k of game.now.playBlocks) {
                     k.x = k.x + dx
                 }
             }
@@ -257,14 +251,16 @@ function setSpeed(keydown) {
 }
 
 function setPlayable() {
-    game.playBlocks = []
-    game.playable = {
-        x: 4,
-        y: 0,
-        type: Math.floor(Math.random() * 7),
-        rotation: 0
+    game.now={
+        playBlocks:[],
+        playable : {
+            x: 4,
+            y: 0,
+            type: Math.floor(Math.random() * 7),
+            rotation: 0
+        }
     }
-    game.type.create(game.playable.type)
+    game.type.create(game.now.playable.type)
 }
 
 // canvasの作成
@@ -328,17 +324,17 @@ function drawBlocks() {
 }
 
 function playable() {
-    game.playable.y += game.speed / fps
-    for (let k of game.playBlocks) {
+    game.now.playable.y += game.speed / fps
+    for (let k of game.now.playBlocks) {
         k.y += game.speed / fps  // y軸に常に移動
         k.draw(ctx)  // 今動かしているblockを描写
     }
 }
 
 function putOrNot() {
-    if (game.playBlocks.length === 0) return false
+    if (game.now.playBlocks.length === 0) return false
     let putable = false;
-    for (let k of game.playBlocks) {
+    for (let k of game.now.playBlocks) {
         let x = k.x;
         let y = Math.floor(k.y)
         if (y === -2) {
@@ -353,7 +349,7 @@ function putOrNot() {
 }
 
 function put() {
-    for (let k of game.playBlocks) {
+    for (let k of game.now.playBlocks) {
         let x = k.x
         let y = Math.floor(k.y)
         game.map.tiles[game.map.tileNumber(x, y)] = k.color
@@ -362,7 +358,7 @@ function put() {
 }
 
 function clearBlocks() {
-    for (let k of game.playBlocks) {
+    for (let k of game.now.playBlocks) {
         lineClear(k)
     }
 }
@@ -384,9 +380,9 @@ function lineClear(k) {
         for (let m = 0; m < game.map.lengthX; m++) {
             game.map.tiles.unshift(0)
         }
-        for (let n = 0; n < game.playBlocks.length; n++) {
-            if (game.playBlocks[n].y === y) {
-                game.playBlocks[n].color = -1
+        for (let n = 0; n < game.now.playBlocks.length; n++) {
+            if (game.now.playBlocks[n].y === y) {
+                game.now.playBlocks[n].color = -1
             }
         }
         game.score += game.map.lengthX
@@ -454,7 +450,7 @@ function colorClearable(k) {
 function colorClear(sameColor) {
     let clearBlocks=makeClearBlocks(sameColor)
     // ミノと消すblockが被っていたらcolor=-1として他で処理しないように
-    for (let m of game.playBlocks) {
+    for (let m of game.now.playBlocks) {
         for (let n of clearBlocks) {
             if (m.x === n[0] && m.y === n[1]) {
                 m.color = -1
