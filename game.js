@@ -258,11 +258,12 @@ function setSpeed(keydown) {
 
 function setPlayable() {
     game.playBlocks = []
-    game.playable.x = 4;
-    game.playable.y = 0;
-    game.playable.type = null;
-    game.playable.rotation = 0
-    game.playable.type = Math.floor(Math.random() * 7)
+    game.playable = {
+        x: 4,
+        y: 0,
+        type: Math.floor(Math.random() * 7),
+        rotation: 0
+    }
     game.type.create(game.playable.type)
 }
 
