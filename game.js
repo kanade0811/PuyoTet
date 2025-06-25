@@ -128,6 +128,11 @@ class Type {
                 game.playable.y + this.shapes[type][0][k][1]
             )
         }
+        if (game.playBlocks[0].color === game.playBlocks[1].color
+            && game.playBlocks[0].color === game.playBlocks[2].color
+            && game.playBlocks[0].color === game.playBlocks[3].color) {
+            setPlayable()
+        }
     }
     rotate() {
         game.playable.rotation = (game.playable.rotation + 1) % 4
@@ -198,8 +203,6 @@ window.onload = function () {
     game = new Game()
     // ゲーム開始時に上真ん中にランダムなblockを配置
     setPlayable()
-    game.playable.type = Math.floor(Math.random() * 7)
-    game.type.create(game.playable.type)
 
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
@@ -258,6 +261,8 @@ function setPlayable() {
     game.playable.y = 0;
     game.playable.type = null;
     game.playable.rotation = 0
+    game.playable.type = Math.floor(Math.random() * 7)
+    game.type.create(game.playable.type)
 }
 
 // canvasの作成
@@ -447,21 +452,21 @@ function colorClearable(k) {
     doClear = true
 }
 
-function colorClear(sameColor){
+function colorClear(sameColor) {
     // y座標が大きい順に並び替える
-    let clearBlocks=[]
-    for(let m=0;m<sameColor.length;m++){
-        if(m===0){
+    let clearBlocks = []
+    for (let m = 0; m < sameColor.length; m++) {
+        if (m === 0) {
             clearBlocks.push(sameColor[m])
             continue
         }
-        for(let n=0;n<clearBlocks.length;n++){
-            if(sameColor[m][1]>=clearBlocks[n][1]){
-                clearBlocks.splice(n,0,sameColor[m])
+        for (let n = 0; n < clearBlocks.length; n++) {
+            if (sameColor[m][1] >= clearBlocks[n][1]) {
+                clearBlocks.splice(n, 0, sameColor[m])
                 break
             }
         }
-        if(sameColor[m][1]<clearBlocks[clearBlocks.length-1][1]){
+        if (sameColor[m][1] < clearBlocks[clearBlocks.length - 1][1]) {
             clearBlocks.push(sameColor[m])
         }
     }
@@ -493,15 +498,15 @@ function colorClear(sameColor){
     }
 }
 
-function dropBlocks(clearBlocks){
+function dropBlocks(clearBlocks) {
     // 色が揃った部分のみで落下判定
-    let clearedX=[]
+    let clearedX = []
     for (let l = 0; l < clearBlocks.length; l++) {
         // 同じx座標について1回だけ落下処理をする
         x = clearBlocks[l][0]
-        if(clearedX.includes(x)===true) continue
+        if (clearedX.includes(x) === true) continue
         clearedX.push(x)
-        y = clearBlocks[l][1]-1   // 変更元のblock
+        y = clearBlocks[l][1] - 1   // 変更元のblock
         Y = clearBlocks[l][1]     // 変更先のblock
         while (y > 0) {
             for (let m = 0; m < clearBlocks.length; m++) {
@@ -511,7 +516,7 @@ function dropBlocks(clearBlocks){
                 if (x === clearBlocks[m][0] && y === clearBlocks[m][1]) y--;
             }
             // 適切なy座標の色を落としてくる
-            game.map.tiles[game.map.tileNumber(x, Y)]= game.map.tiles[game.map.tileNumber(x, y)]
+            game.map.tiles[game.map.tileNumber(x, Y)] = game.map.tiles[game.map.tileNumber(x, y)]
             Y--
             y--
         }
@@ -544,8 +549,6 @@ function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
         game.playBlocks = []
         setPlayable()
-        game.playable.type = Math.floor(Math.random() * 7)
-        game.type.create(game.playable.type)
         return true
     } else {
         clearInterval(game.gameInterval)
