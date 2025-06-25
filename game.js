@@ -77,14 +77,23 @@ class Block {
             )
         }
     }
-    drawNext(){
+    drawNext() {
         ctx.fillStyle = game.map.tileColors[this.color]
+        console.log(game.next.playable.type)
+        ctx.fillRect(
+            (this.x + game.map.lengthX - 2 + game.type.position[game.next.playable.type][0]) * width,
+            (this.y + 1 + 1 / 2 + game.type.position[game.next.playable.type][1]) * width,
+            width,
+            width
+        )
+        /*
         ctx.fillRect(
             (this.x+3) * width,
             (game.map.lengthY+this.y+1/2) * width,
             width,
             width
         )
+        */
     }
 }
 
@@ -128,7 +137,11 @@ class Type {
                 [[0, 1], [0, 0], [1, 0], [1, -1]],
                 [[1, 1], [0, 1], [0, 0], [-1, 0]],
                 [[0, -1], [0, 0], [-1, 0], [-1, 1]]
-            ]]
+            ]
+        ]
+        this.position = [
+            [0,1/2], [0, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0]
+        ]
     }
     create(type) {
         for (let k = 0; k < 4; k++) {
@@ -191,7 +204,7 @@ class Game {
     constructor() {
         this.map = new Map()
         this.type = new Type()
-        this.now=null
+        this.now = null
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
         this.speed = 1
@@ -205,9 +218,9 @@ window.onload = function () {
 
     game = new Game()
     // ゲーム開始時に上真ん中にランダムなblockを配置
-    game.next={
-        playBlocks:[],
-        playable : {
+    game.next = {
+        playBlocks: [],
+        playable: {
             x: 4,
             y: 0,
             type: Math.floor(Math.random() * 7),
@@ -270,10 +283,10 @@ function setSpeed(keydown) {
 }
 
 function setPlayable() {
-    game.now=game.next
-    game.next={
-        playBlocks:[],
-        playable : {
+    game.now = game.next
+    game.next = {
+        playBlocks: [],
+        playable: {
             x: 4,
             y: 0,
             type: Math.floor(Math.random() * 7),
@@ -282,21 +295,6 @@ function setPlayable() {
     }
     game.type.create(game.next.playable.type)
 }
-
-/*
-function setPlayable() {
-    game.now={
-        playBlocks:[],
-        playable : {
-            x: 4,
-            y: 0,
-            type: Math.floor(Math.random() * 7),
-            rotation: 0
-        }
-    }
-    game.type.create(game.now.playable.type)
-}
-*/
 
 // canvasの作成
 const canvas = document.getElementById("canvas")
@@ -317,6 +315,7 @@ function draw() {
             gameover()
         }
     }
+    drawScore()
 }
 
 function clear() {
@@ -334,12 +333,6 @@ function background() {
             ctx.strokeRect(width * x, width * y, width, width)
         }
     }
-
-    // スコアの描写
-    ctx.fillStyle = "black"
-    ctx.font = "50px serif"
-    // ctx.fillText(("score:" + game.score), (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 1)))
-    ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 1)))
 }
 
 function drawBlocks() {
@@ -359,8 +352,15 @@ function drawBlocks() {
     }
 }
 
-function drawNext(){
-    for(let k of game.next.playBlocks){
+function drawNext() {
+    ctx.fillStyle = "black"
+    ctx.font = "40px serif"
+    ctx.fillText(
+        "next block",
+        (width * (game.map.lengthX + 1)),
+        width
+    )
+    for (let k of game.next.playBlocks) {
         k.drawNext()
     }
 }
@@ -490,7 +490,7 @@ function colorClearable(k) {
 }
 
 function colorClear(sameColor) {
-    let clearBlocks=makeClearBlocks(sameColor)
+    let clearBlocks = makeClearBlocks(sameColor)
     // ミノと消すblockが被っていたらcolor=-1として他で処理しないように
     for (let m of game.now.playBlocks) {
         for (let n of clearBlocks) {
@@ -504,17 +504,17 @@ function colorClear(sameColor) {
     dropBlocks(clearBlocks)
     drawBlocks()
     // 落下したblockに対して、異なるx座標の大きいyからcolorClearする
-    let clearedX=[]
-    for(let l=0;l<clearBlocks.length;l++){
+    let clearedX = []
+    for (let l = 0; l < clearBlocks.length; l++) {
         // x軸が同じものは複数回実行しない
-        if(clearedX.includes(clearBlocks[l][0])===true) continue
+        if (clearedX.includes(clearBlocks[l][0]) === true) continue
         clearedX.push(clearBlocks[l][0])
-        createBlocksX(clearBlocks[l][0],clearBlocks[l][1])
+        createBlocksX(clearBlocks[l][0], clearBlocks[l][1])
     }
 }
 
 // sameColorをy座標が大きい順に並び替えclearBlocksを作る
-function makeClearBlocks(sameColor){
+function makeClearBlocks(sameColor) {
     let clearBlocks = []
     for (let m = 0; m < sameColor.length; m++) {
         // 最初は確定で配列に追加
@@ -560,8 +560,8 @@ function dropBlocks(clearBlocks) {
             y--
         }
         // 上にblockが無くなった場合は透明blockを追加
-        while(Y>=0){
-            game.map.tiles[game.map.tileNumber(x, Y)]=0
+        while (Y >= 0) {
+            game.map.tiles[game.map.tileNumber(x, Y)] = 0
             Y--
         }
     }
@@ -595,6 +595,22 @@ function isContinue() {
 function gameover() {
     ctx.fillStyle = "black"
     ctx.font = "50px serif"
-    // ctx.fillText("game over", (width * (game.map.lengthX + 1)), (width * (game.map.lengthY - 2)))
-    ctx.fillText("game over", 0, (width * (game.map.lengthY + 2)))
+    ctx.fillText(
+        "game over",
+        (width * (game.map.lengthX + 1)),
+        (width * (game.map.lengthY - 1 - 1 / 4))
+    )
+    // ctx.fillText("game over", 0, (width * (game.map.lengthY + 2)))
+}
+
+function drawScore() {
+    // スコアの描写
+    ctx.fillStyle = "black"
+    ctx.font = "50px serif"
+    ctx.fillText(
+        ("score:" + game.score),
+        (width * (game.map.lengthX + 1)),
+        (width * (game.map.lengthY - 1 / 4))
+    )
+    // ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 1)))
 }
