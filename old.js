@@ -49,14 +49,21 @@ class Map {
 
 // 落下中のblock
 class Block {
-    constructor() {
+    /**
+    * @param {number} x blockの初期X
+    * @param {number} y blockの初期Y
+    */
+    constructor(x, y) {
+        this.x = x
+        this.y = y
         this.color = Math.floor(Math.random() * 5 + 1)
         this.nextX=game.map.lengthX+2
         this.nextY=2
     }
     draw(k) {
-        let x=nowBlockX(k)
-        let y=nowBlockY(k)
+        let p=game.now.playable
+        let x=p.x + game.type.shapes[p.type][p.rotation][k][0]
+        let y=p.y + game.type.shapes[p.type][p.rotation][k][1]
         if (y <= -1) return
         ctx.fillStyle = game.map.tileColors[this.color]
         if (0 <= y) {
@@ -133,9 +140,13 @@ class Type {
             [0,1/2], [0, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0]
         ]
     }
-    create() {
+    /*
+    create(type) {
         for (let k = 0; k < 4; k++) {
-            game.next.playBlocks[k] = new Block()
+            game.next.playBlocks[k] = new Block(
+                game.next.playable.x + this.shapes[type][0][k][0],
+                game.next.playable.y + this.shapes[type][0][k][1]
+            )
         }
         if (game.next.playBlocks[0].color === game.next.playBlocks[1].color
             && game.next.playBlocks[0].color === game.next.playBlocks[2].color
@@ -143,12 +154,13 @@ class Type {
             setPlayable()
         }
     }
+    */
+    /*
     rotate() {
-        let p=game.now.playable
-        p.rotation = (p.rotation + 1) % 4
+        game.now.playable.rotation = (game.now.playable.rotation + 1) % 4
         let nextX = []
         for (let k = 0; k < game.now.playBlocks.length; k++) {
-            nextX.push(p.x + this.shapes[p.type][p.rotation][k][0])
+            nextX.push(game.now.playable.x + this.shapes[game.now.playable.type][game.now.playable.rotation][k][0])
         }
         let max = -1
         let min = game.map.lengthX + 1
@@ -160,34 +172,50 @@ class Type {
             }
         }
         if (min === -2) {
-            p.x+=2
+            for (let k = 0; k < nextX.length; k++) {
+                for (let l = 0; l < 2; l++) {
+                    nextX[k]++
+                }
+            }
         } else if (min === -1) {
-            p.x++
+            for (let k = 0; k < nextX.length; k++) {
+                nextX[k]++
+            }
         } else if (max === game.map.lengthX) {
-            p.x--
+            for (let k = 0; k < nextX.length; k++) {
+                nextX[k]--
+            }
         } else if (max === game.map.lengthX + 1) {
-            p.x-=2
+            for (let k = 0; k < nextX.length; k++) {
+                for (let l = 0; l < 2; l++) {
+                    nextX[k]--
+                }
+            }
+        }
+        for (let k = 0; k < game.now.playBlocks.length; k++) {
+            game.now.playBlocks[k].x = nextX[k]
+            game.now.playBlocks[k].y = game.now.playable.y + this.shapes[game.now.playable.type][game.now.playable.rotation][k][1]
         }
     }
+    */
 }
 
+/*
 // gameの初期設定
 class Game {
     constructor() {
         this.map = new Map()
         this.type = new Type()
         this.now = null
-        this.next=null
-        this.hold=null
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
         this.speed = 1
         this.defaultSpeed = 1
         this.incraseSpeed = 8
-        this.clear=[]
     }
 }
 let game
+*/
 
 window.onload = function () {
 
@@ -205,25 +233,30 @@ window.onload = function () {
     game.type.create(game.next.playable.type)
     setPlayable()
 
+    /*
     // 左右が押されたら瞬時に移動
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyA" || event.code === "KeyD") {
             let move = { KeyA: -1, KeyD: 1 }
             let dx = move[event.code]
             let nextMove = true
-            if(dx===undefined) return
-            for(let k=0;k<game.now.playBlocks.length;k++){
-                let nextX=nowBlockX(k)+dx
-                if (!(0 <= nextX && nextX < game.map.lengthX)) {
-                    nextMove = false
-                    break
+            for (let k of game.now.playBlocks) {
+                if (dx !== undefined) {
+                    let nextX = k.x + dx
+                    if (!(0 <= nextX && nextX < game.map.lengthX)) {
+                        nextMove = false
+                    }
                 }
             }
             if (nextMove === true) {
                 game.now.playable.x += dx
+                for (let k of game.now.playBlocks) {
+                    k.x = k.x + dx
+                }
             }
         }
     })
+    */
     // 下が押されたら落下速度上昇
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyS") {
@@ -242,7 +275,7 @@ window.onload = function () {
             game.type.rotate()
         }
     })
-    // Qが押されたらhold(未実装)
+    // 下が押されたら落下速度上昇
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyQ") {
             console.log(game.map.tiles)
@@ -268,21 +301,13 @@ function setPlayable() {
     game.type.create(game.next.playable.type)
 }
 
-function nowBlockX(k){
-    return game.now.playable.x+game.type.shapes[game.now.playable.type][game.now.playable.rotation][k][0]
-}
-
-function nowBlockY(k){
-    return game.now.playable.y+game.type.shapes[game.now.playable.type][game.now.playable.rotation][k][1]
-}
-
 // canvasの作成
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 
 // 1フレームごとに描写する
 function draw() {
-    ctx.clearRect(0, 0, 1000, 1000)
+    clear()
     background()
     drawBlocks()
     drawNext()
@@ -296,6 +321,10 @@ function draw() {
         }
     }
     drawScore()
+}
+
+function clear() {
+    ctx.clearRect(0, 0, 1000, 1000)
 }
 
 function background() {
@@ -351,9 +380,9 @@ function playable() {
 function putOrNot() {
     if (game.now.playBlocks.length === 0) return false
     let putable = false;
-    for (let k=0;k<game.now.playBlocks.length;k++) {
-        let x = nowBlockX(k)
-        let y = Math.floor(nowBlockY(k))
+    for (let k of game.now.playBlocks) {
+        let x = k.x;
+        let y = Math.floor(k.y)
         if (y === -2) {
             continue
         }
@@ -366,29 +395,21 @@ function putOrNot() {
 }
 
 function put() {
-    for(let k=0;k<game.now.playBlocks.length;k++){
-        let x=nowBlockX(k)
-        let y=Math.floor(nowBlockY(k))
-        game.map.tiles[game.map.tileNumber(x,y)]=game.now.playBlocks[k].color
+    for (let k of game.now.playBlocks) {
+        let x = k.x
+        let y = Math.floor(k.y)
+        game.map.tiles[game.map.tileNumber(x, y)] = k.color
     }
     drawBlocks()
 }
 
+/*
 function clearBlocks() {
-    game.clear=[]
-    for(let k=0;k<game.now.playBlocks.length;k++){
-        game.clear.push({
-            x:nowBlockX(k),
-            y:nowBlockY(k),
-            color:game.now.playBlocks[k].color
-        })
-    }
-    for(let k of game.clear){
-        if(k.color===-1) continue
+    for (let k of game.now.playBlocks) {
         lineClear(k)
     }
-    console.log(game.clear)
 }
+*/
 
 // lineを消し、colorを動かさせる
 function lineClear(k) {
@@ -407,37 +428,45 @@ function lineClear(k) {
         for (let m = 0; m < game.map.lengthX; m++) {
             game.map.tiles.unshift(0)
         }
-        // 処理が被るblockは色を-1に
-        for(let m of game.clear){
-            if(m.y===y) m.color=-1
+        for (let n = 0; n < game.now.playBlocks.length; n++) {
+            if (game.now.playBlocks[n].y === y) {
+                game.now.playBlocks[n].color = -1
+            }
         }
         game.score += game.map.lengthX
         createBlocksY(y)
-    } else {
+    } else if (lineClearable === false) {
         colorClearable(k)
     }
     drawBlocks()
 }
 
-// lineで消した後に自由落下してきたblockに対するclear判定
+/*
+// lineで消した後のblockに対するcolor判定
 function createBlocksY(Y) {
+    let clear = []
     for (let X = 0; X < game.map.lengthX; X++) {
-        if(game.map.tileAt(X, Y)===0) continue
-        game.clear.push({
+        clear.push({
             x: X,
             y: Y,
             color: game.map.tileAt(X, Y)
         })
     }
+    for (let k of clear) {
+        lineClear(k)
+    }
 }
+*/
 
-// 色が揃って消えるかどうかの判定
 function colorClearable(k) {
+    if (k.color === -1) return
     let x = k.x
     let y = Math.floor(k.y)
-    if (game.map.tileAt(x, y) === 0) return
+    if (game.map.tileAt(x, y) === 0) {
+        return
+    }
     let sameColor = [[x, y]]
-    // 同じ色の隣同士を同じ色かどうか調べる
+    // 同じ色の隣同士を同じ色じゃないか調べる
     for (let l = 0; l < sameColor.length; l++) {
         let base = sameColor[l]
         let search = [
@@ -450,11 +479,9 @@ function colorClearable(k) {
         for (let m = 0; m < search.length; m++) {
             if (game.map.tileAt(base[0], base[1]) === game.map.tileAt(search[m][0], search[m][1])) {
                 let exist = true
-                // もし既にsameColorに入っていた場合は重複して入れない
                 for (let n = 0; n < sameColor.length; n++) {
                     if (search[m][0] === sameColor[n][0] && search[m][1] === sameColor[n][1]) {
                         exist = false
-                        break
                     }
                 }
                 if (exist === true) {
@@ -464,17 +491,34 @@ function colorClearable(k) {
         }
     }
     // 色が4つ以上揃ったら消す
-    console.log(sameColor.length>=4)
-    if(sameColor.length>=4){
-        // 配列をyの昇順→xの昇順になるように並び替える
-        sameColor.sort((a,b)=>{
-            if(a[1]!==b[1]) return b[1]-a[1]
-            return b[0]-a[0]
-        })
+    if (sameColor.length >= 4) {
         colorClear(sameColor)
     }
-    // if (sameColor.length >= 4) colorClear(makeClearBlocks(sameColor))
     doClear = true
+}
+
+function colorClear(sameColor) {
+    let clearBlocks = makeClearBlocks(sameColor)
+    // ミノと消すblockが被っていたらcolor=-1として他で処理しないように
+    for (let m of game.now.playBlocks) {
+        for (let n of clearBlocks) {
+            if (m.x === n[0] && m.y === n[1]) {
+                m.color = -1
+                break
+            }
+        }
+    }
+    game.score += sameColor.length
+    dropBlocks(clearBlocks)
+    drawBlocks()
+    // 落下したblockに対して、異なるx座標の大きいyからcolorClearする
+    let clearedX = []
+    for (let l = 0; l < clearBlocks.length; l++) {
+        // x軸が同じものは複数回実行しない
+        if (clearedX.includes(clearBlocks[l][0]) === true) continue
+        clearedX.push(clearBlocks[l][0])
+        createBlocksX(clearBlocks[l][0], clearBlocks[l][1])
+    }
 }
 
 // sameColorをy座標が大きい順に並び替えclearBlocksを作る
@@ -494,48 +538,23 @@ function makeClearBlocks(sameColor) {
             }
         }
         // もしy座標が一番小さかったら配列の最後に追加
-        if (sameColor[m][1] < clearBlocks.at(-1)[1]) {
+        if (sameColor[m][1] < clearBlocks[clearBlocks.length - 1][1]) {
             clearBlocks.push(sameColor[m])
         }
     }
     return clearBlocks
 }
 
-function colorClear(clearBlocks) {
-    console.log(clearBlocks)
-    // ミノと消すblockが被っていたらcolor=-1として他で処理しないように
-    for (let m of game.clear) {
-        for (let n of clearBlocks) {
-            if (m.x === n[0] && m.y === n[1]) {
-                m.color = -1
-            }
-        }
-    }
-    game.score += clearBlocks.length
-    dropBlocks(clearBlocks)
-    drawBlocks()
-    // 落下したblockに対して、異なるx座標の大きいyからcolorClearする
-    let clearedX = []
-    for (let l = 0; l < clearBlocks.length; l++) {
-        // x軸が同じものは複数回実行しない
-        if (clearedX.includes(clearBlocks[l][0]) === true) continue
-        clearedX.push(clearBlocks[l][0])
-        createBlocksX(clearBlocks[l][0], clearBlocks[l][1])
-    }
-}
-
 // 色が揃った部分のみで落下判定
 function dropBlocks(clearBlocks) {
-    // 処理済みのx座標を保存する配列
     let clearedX = []
     for (let l = 0; l < clearBlocks.length; l++) {
         // 同じx座標について1回だけ落下処理をする
         x = clearBlocks[l][0]
         if (clearedX.includes(x) === true) continue
         clearedX.push(x)
-        Y = clearBlocks[l][1]     // 変更先のblock
         y = clearBlocks[l][1] - 1   // 変更元のblock
-        // 上の色を落としてくる
+        Y = clearBlocks[l][1]     // 変更先のblock
         while (y >= 0) {
             for (let m = 0; m < clearBlocks.length; m++) {
                 // 配列内の同じblockは考えない
@@ -556,17 +575,22 @@ function dropBlocks(clearBlocks) {
     }
 }
 
-// colorで消した後の落下したblock全てをclearに追加
+/*
+// colorで消した後の落下したblockに対して全てにclearLineを実行
 function createBlocksX(X, Y) {
+    let clear = []
     for (Y; Y > 0; Y--) {
-        if(game.map.tileAt(X, Y)===0) continue
-        game.clear.push({
+        clear.push({
             x: X,
             y: Y,
             color: game.map.tileAt(X, Y)
         })
     }
+    for (let k of clear) {
+        lineClear(k)
+    }
 }
+*/
 
 function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
