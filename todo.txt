@@ -18,9 +18,9 @@
 ・同じ色のみのミノが出ないようにする
 ・includesで書き換え
 ・次のblockが表示されるようにする
+・blockの保存/交換
 
 【実装予定】
-・blockの保存/交換
 ・色が消えて落下する際に適切にミノも落下するようにする
 　→colorClearと連動し同じマス数だけ下げるか否か
 ・blockを置き一定時間そのままにしてから消える描写を入れる
@@ -30,45 +30,5 @@
 
 
 
-{playBlocks: Array(4), playable: {…}}
-playBlocks
-: 
-Array(4)
-0
-: 
-Block {x: 5, y: 4.733333333333326, color: 3, nextX: 11, nextY: 2, …}
-1
-: 
-Block {x: 3, y: 5.733333333333324, color: 2, nextX: 11, nextY: 2, …}
-2
-: 
-Block {x: 4, y: 5.733333333333324, color: 5, nextX: 11, nextY: 2, …}
-3
-: 
-Block {x: 5, y: 5.733333333333324, color: 4, nextX: 11, nextY: 2, …}
-length
-: 
-4
-[[Prototype]]
-: 
-Array(0)
-playable
-: 
-rotation
-: 
-0
-type
-: 
-4
-x
-: 
-4
-y
-: 
-6.199999999999988
-[[Prototype]]
-: 
-Object
-[[Prototype]]
-: 
-Object
+block color
+playable x,y,type,rotation

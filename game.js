@@ -47,46 +47,6 @@ class Map {
     }
 }
 
-// 落下中のblock
-class Block {
-    constructor() {
-        this.color = Math.floor(Math.random() * 5 + 1)
-        this.nextX=game.map.lengthX+2
-        this.nextY=2
-    }
-    draw(k) {
-        let x=nowBlockX(k)
-        let y=nowBlockY(k)
-        if (y <= -1) return
-        ctx.fillStyle = game.map.tileColors[this.color]
-        if (0 <= y) {
-            ctx.fillRect(
-                x * width,
-                y * width,
-                width,
-                width
-            )
-        } else {
-            ctx.fillRect(
-                x * width,
-                0 * width,
-                width,
-                (1 + y) * width
-            )
-        }
-    }
-    drawNext(k) {
-        let p=game.next.playable
-        ctx.fillStyle = game.map.tileColors[this.color]
-        ctx.fillRect(
-            (this.nextX+game.type.shapes[p.type][p.rotation][k][0]+ game.type.position[game.next.playable.type][0]) * width,
-            (this.nextY+game.type.shapes[p.type][p.rotation][k][1]+ game.type.position[game.next.playable.type][1]) * width,
-            width,
-            width
-        )
-    }
-}
-
 class Type {
     constructor() {
         this.x = 4
@@ -130,21 +90,21 @@ class Type {
             ]
         ]
         this.position = [
-            [0,1/2], [0, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0]
+            [0, 1 / 2], [0, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0]
         ]
     }
     create() {
-        for (let k = 0; k < 4; k++) {
-            game.next.playBlocks[k] = new Block()
+        let b=game.next.playBlocks
+        for (let k = 0; k < game.type.shapes[game.next.playable.type][0].length; k++) {
+            b[k]={}
+            b[k].color=Math.floor(Math.random() * 5 + 1)
         }
-        if (game.next.playBlocks[0].color === game.next.playBlocks[1].color
-            && game.next.playBlocks[0].color === game.next.playBlocks[2].color
-            && game.next.playBlocks[0].color === game.next.playBlocks[3].color) {
+        if (b[0].color === b[1].color&& b[0].color === b[2].color&& b[0].color === b[3].color) {
             setPlayable()
         }
     }
     rotate() {
-        let p=game.now.playable
+        let p = game.now.playable
         p.rotation = (p.rotation + 1) % 4
         let nextX = []
         for (let k = 0; k < game.now.playBlocks.length; k++) {
@@ -160,13 +120,13 @@ class Type {
             }
         }
         if (min === -2) {
-            p.x+=2
+            p.x += 2
         } else if (min === -1) {
             p.x++
         } else if (max === game.map.lengthX) {
             p.x--
         } else if (max === game.map.lengthX + 1) {
-            p.x-=2
+            p.x -= 2
         }
     }
 }
@@ -177,14 +137,14 @@ class Game {
         this.map = new Map()
         this.type = new Type()
         this.now = null
-        this.next=null
-        this.hold=null
+        this.next = null
+        this.hold = null
         this.score = 0
         this.gameInterval = setInterval(draw, 1000 / fps)
         this.speed = 1
         this.defaultSpeed = 1
         this.incraseSpeed = 8
-        this.clear=[]
+        this.clear = []
     }
 }
 let game
@@ -203,6 +163,7 @@ window.onload = function () {
         }
     }
     game.type.create(game.next.playable.type)
+    game.now = game.next
     setPlayable()
 
     // 左右が押されたら瞬時に移動
@@ -211,9 +172,9 @@ window.onload = function () {
             let move = { KeyA: -1, KeyD: 1 }
             let dx = move[event.code]
             let nextMove = true
-            if(dx===undefined) return
-            for(let k=0;k<game.now.playBlocks.length;k++){
-                let nextX=nowBlockX(k)+dx
+            if (dx === undefined) return
+            for (let k = 0; k < game.now.playBlocks.length; k++) {
+                let nextX = nowBlockX(k) + dx
                 if (!(0 <= nextX && nextX < game.map.lengthX)) {
                     nextMove = false
                     break
@@ -245,7 +206,7 @@ window.onload = function () {
     // Qが押されたらhold(未実装)
     document.addEventListener("keydown", (event) => {
         if (event.code === "KeyQ") {
-            console.log(game.map.tiles)
+            hold()
         }
     })
 }
@@ -254,8 +215,34 @@ function setSpeed(keydown) {
     game.speed = game.defaultSpeed + game.incraseSpeed * keydown
 }
 
+function hold() {
+    if (game.hold === null) {
+        // color,type,rotationをコピーする
+        game.hold = {
+            playable: {
+                type: null,
+                rotation: null
+            },
+            playBlocks: []
+        }
+        game.hold.playBlocks = game.now.playBlocks
+        game.hold.playable.type = game.now.playable.type
+        game.hold.playable.rotation = game.now.playable.rotation
+        game.now = game.next
+        setPlayable()
+    } else {
+        let temporary = structuredClone(game.hold)
+        game.hold.playBlocks = structuredClone(game.now.playBlocks)
+        game.hold.playable.type = game.now.playable.type
+        game.hold.playable.rotation = game.now.playable.rotation
+        game.now.playBlocks = temporary.playBlocks
+        game.now.playable.type = temporary.playable.type
+        game.now.playable.rotation = temporary.playable.rotation
+        temporary = null
+    }
+}
+
 function setPlayable() {
-    game.now = game.next
     game.next = {
         playBlocks: [],
         playable: {
@@ -268,12 +255,12 @@ function setPlayable() {
     game.type.create(game.next.playable.type)
 }
 
-function nowBlockX(k){
-    return game.now.playable.x+game.type.shapes[game.now.playable.type][game.now.playable.rotation][k][0]
+function nowBlockX(k) {
+    return game.now.playable.x + game.type.shapes[game.now.playable.type][game.now.playable.rotation][k][0]
 }
 
-function nowBlockY(k){
-    return game.now.playable.y+game.type.shapes[game.now.playable.type][game.now.playable.rotation][k][1]
+function nowBlockY(k) {
+    return game.now.playable.y + game.type.shapes[game.now.playable.type][game.now.playable.rotation][k][1]
 }
 
 // canvasの作成
@@ -286,6 +273,7 @@ function draw() {
     background()
     drawBlocks()
     drawNext()
+    drawHold()
     playable()
 
     if (putOrNot()) {
@@ -336,22 +324,70 @@ function drawNext() {
         (width * (game.map.lengthX + 1)),
         width
     )
-    for(let k=0;k<game.next.playBlocks.length;k++){
-        game.next.playBlocks[k].drawNext(k)
+    let p = game.next.playable
+    for (let k = 0; k < game.next.playBlocks.length; k++) {
+        ctx.fillStyle = game.map.tileColors[game.next.playBlocks[k].color]
+        ctx.fillRect(
+            ((game.map.lengthX + 2) + game.type.shapes[p.type][p.rotation][k][0] + game.type.position[p.type][0]) * width,
+            (2 + game.type.shapes[p.type][p.rotation][k][1] + game.type.position[p.type][1]) * width,
+            width,
+            width
+        )
+    }
+}
+
+function drawHold() {
+    ctx.fillStyle = "black"
+    ctx.font = "40px serif"
+    ctx.fillText(
+        "next block",
+        (width * (game.map.lengthX + 1)),
+        width * 5
+    )
+    if (game.hold === null) return
+    let p = game.hold.playable
+    let b = game.hold.playBlocks
+    for (let k = 0; k < game.hold.playBlocks.length; k++) {
+        ctx.fillStyle = game.map.tileColors[b[k].color]
+        ctx.fillRect(
+            ((game.map.lengthX + 3) + game.type.shapes[p.type][p.rotation][k][0]) * width,
+            (6 + game.type.shapes[p.type][p.rotation][k][1]) * width,
+            width,
+            width
+        )
     }
 }
 
 function playable() {
     game.now.playable.y += game.speed / fps
-    for(let k=0;k<game.now.playBlocks.length;k++){
-        game.now.playBlocks[k].draw(k)
+    let b = game.now.playBlocks
+    for (let k = 0; k < game.now.playBlocks.length; k++) {
+        let x = nowBlockX(k)
+        let y = nowBlockY(k)
+        if (y <= -1) continue
+        ctx.fillStyle = game.map.tileColors[b[k].color]
+        if (0 <= y) {
+            ctx.fillRect(
+                x * width,
+                y * width,
+                width,
+                width
+            )
+        } else {
+            ctx.fillRect(
+                x * width,
+                0 * width,
+                width,
+                (1 + y) * width
+            )
+        }
     }
 }
 
 function putOrNot() {
     if (game.now.playBlocks.length === 0) return false
     let putable = false;
-    for (let k=0;k<game.now.playBlocks.length;k++) {
+    for (let k = 0; k < game.now.playBlocks.length; k++) {
         let x = nowBlockX(k)
         let y = Math.floor(nowBlockY(k))
         if (y === -2) {
@@ -366,28 +402,27 @@ function putOrNot() {
 }
 
 function put() {
-    for(let k=0;k<game.now.playBlocks.length;k++){
-        let x=nowBlockX(k)
-        let y=Math.floor(nowBlockY(k))
-        game.map.tiles[game.map.tileNumber(x,y)]=game.now.playBlocks[k].color
+    for (let k = 0; k < game.now.playBlocks.length; k++) {
+        let x = nowBlockX(k)
+        let y = Math.floor(nowBlockY(k))
+        game.map.tiles[game.map.tileNumber(x, y)] = game.now.playBlocks[k].color
     }
     drawBlocks()
 }
 
 function clearBlocks() {
-    game.clear=[]
-    for(let k=0;k<game.now.playBlocks.length;k++){
+    game.clear = []
+    for (let k = 0; k < game.now.playBlocks.length; k++) {
         game.clear.push({
-            x:nowBlockX(k),
-            y:nowBlockY(k),
-            color:game.now.playBlocks[k].color
+            x: nowBlockX(k),
+            y: nowBlockY(k),
+            color: game.now.playBlocks[k].color
         })
     }
-    for(let k of game.clear){
-        if(k.color===-1) continue
+    for (let k of game.clear) {
+        if (k.color === -1) continue
         lineClear(k)
     }
-    console.log(game.clear)
 }
 
 // lineを消し、colorを動かさせる
@@ -408,8 +443,8 @@ function lineClear(k) {
             game.map.tiles.unshift(0)
         }
         // 処理が被るblockは色を-1に
-        for(let m of game.clear){
-            if(m.y===y) m.color=-1
+        for (let m of game.clear) {
+            if (m.y === y) m.color = -1
         }
         game.score += game.map.lengthX
         createBlocksY(y)
@@ -422,7 +457,7 @@ function lineClear(k) {
 // lineで消した後に自由落下してきたblockに対するclear判定
 function createBlocksY(Y) {
     for (let X = 0; X < game.map.lengthX; X++) {
-        if(game.map.tileAt(X, Y)===0) continue
+        if (game.map.tileAt(X, Y) === 0) continue
         game.clear.push({
             x: X,
             y: Y,
@@ -464,12 +499,11 @@ function colorClearable(k) {
         }
     }
     // 色が4つ以上揃ったら消す
-    console.log(sameColor.length>=4)
-    if(sameColor.length>=4){
+    if (sameColor.length >= 4) {
         // 配列をyの昇順→xの昇順になるように並び替える
-        sameColor.sort((a,b)=>{
-            if(a[1]!==b[1]) return b[1]-a[1]
-            return b[0]-a[0]
+        sameColor.sort((a, b) => {
+            if (a[1] !== b[1]) return b[1] - a[1]
+            return b[0] - a[0]
         })
         colorClear(sameColor)
     }
@@ -502,7 +536,6 @@ function makeClearBlocks(sameColor) {
 }
 
 function colorClear(clearBlocks) {
-    console.log(clearBlocks)
     // ミノと消すblockが被っていたらcolor=-1として他で処理しないように
     for (let m of game.clear) {
         for (let n of clearBlocks) {
@@ -559,7 +592,7 @@ function dropBlocks(clearBlocks) {
 // colorで消した後の落下したblock全てをclearに追加
 function createBlocksX(X, Y) {
     for (Y; Y > 0; Y--) {
-        if(game.map.tileAt(X, Y)===0) continue
+        if (game.map.tileAt(X, Y) === 0) continue
         game.clear.push({
             x: X,
             y: Y,
@@ -570,6 +603,7 @@ function createBlocksX(X, Y) {
 
 function isContinue() {
     if (game.map.tileAt(4, 0) === 0) {
+        game.now = game.next
         setPlayable()
         return true
     } else {
