@@ -90,16 +90,24 @@ class Type {
             ]
         ]
         this.position = [
-            [0, 1 / 2], [0, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0], [1 / 2, 0]
+            [0, 1 / 2],
+            [0, 0],
+            [1 / 2, 0],
+            [1 / 2, 0],
+            [1 / 2, 0],
+            [1 / 2, 0],
+            [1 / 2, 0]
         ]
     }
     create() {
-        let b=game.next.playBlocks
+        let b = game.next.playBlocks
+        // それぞれのblockに色を割り振る
         for (let k = 0; k < game.type.shapes[game.next.playable.type][0].length; k++) {
-            b[k]={}
-            b[k].color=Math.floor(Math.random() * 5 + 1)
+            b[k] = {}
+            b[k].color = Math.floor(Math.random() * 5 + 1)
         }
-        if (b[0].color === b[1].color&& b[0].color === b[2].color&& b[0].color === b[3].color) {
+        // 全てのblockで色が一緒ならblockを作り直し
+        if (b[0].color === b[1].color && b[0].color === b[2].color && b[0].color === b[3].color) {
             setPlayable()
         }
     }
@@ -227,7 +235,22 @@ function hold() {
         }
         game.hold.playBlocks = game.now.playBlocks
         game.hold.playable.type = game.now.playable.type
-        game.hold.playable.rotation = game.now.playable.rotation
+        console.log(game.now.playable.rotation)
+        // game.hold.playable.rotation = game.now.playable.rotation
+        const nowT = game.now.playable.type
+        console.log(nowT)
+        if ([1].includes(nowT)) {
+            game.hold.playable.rotation = game.now.playable.rotation
+        } else if ([0, 5, 6].includes(nowT)) {
+            if (game.now.playable.rotation < 2) {
+                game.hold.playable.rotation = 0
+            } else if (game.now.playable.rotation >= 2) {
+                game.hold.playable.rotation = 2
+            }
+        } else if ([2, 3, 4].includes(nowT)) {
+            game.hold.playable.rotation = 0
+        }
+        console.log(game.hold.playable)
         game.now = game.next
         setPlayable()
     } else {
@@ -235,6 +258,19 @@ function hold() {
         game.hold.playBlocks = structuredClone(game.now.playBlocks)
         game.hold.playable.type = game.now.playable.type
         game.hold.playable.rotation = game.now.playable.rotation
+        const nowT = game.now.playable.type
+        console.log(nowT)
+        if ([1].includes(nowT)) {
+            game.hold.playable.rotation = game.now.playable.rotation
+        } else if ([0, 5, 6].includes(nowT)) {
+            if (game.now.playable.rotation < 2) {
+                game.hold.playable.rotation = 0
+            } else if (game.now.playable.rotation >= 2) {
+                game.hold.playable.rotation = 2
+            }
+        } else if ([2, 3, 4].includes(nowT)) {
+            game.hold.playable.rotation = 0
+        }
         game.now.playBlocks = temporary.playBlocks
         game.now.playable.type = temporary.playable.type
         game.now.playable.rotation = temporary.playable.rotation
@@ -249,7 +285,7 @@ function setPlayable() {
             x: 4,
             y: 0,
             type: Math.floor(Math.random() * 7),
-            rotation: 0
+            rotation: 0,
         }
     }
     game.type.create(game.next.playable.type)
@@ -340,7 +376,7 @@ function drawHold() {
     ctx.fillStyle = "black"
     ctx.font = "40px serif"
     ctx.fillText(
-        "next block",
+        "hold block",
         (width * (game.map.lengthX + 1)),
         width * 5
     )
@@ -349,9 +385,17 @@ function drawHold() {
     let b = game.hold.playBlocks
     for (let k = 0; k < game.hold.playBlocks.length; k++) {
         ctx.fillStyle = game.map.tileColors[b[k].color]
+        /*
         ctx.fillRect(
             ((game.map.lengthX + 3) + game.type.shapes[p.type][p.rotation][k][0]) * width,
             (6 + game.type.shapes[p.type][p.rotation][k][1]) * width,
+            width,
+            width
+        )
+        */
+        ctx.fillRect(
+            ((game.map.lengthX + 2) + game.type.shapes[p.type][p.rotation][k][0] + game.type.position[p.type][0]) * width,
+            (6 + game.type.shapes[p.type][p.rotation][k][1] + game.type.position[p.type][1]) * width,
             width,
             width
         )
@@ -593,11 +637,13 @@ function dropBlocks(clearBlocks) {
 function createBlocksX(X, Y) {
     for (Y; Y > 0; Y--) {
         if (game.map.tileAt(X, Y) === 0) continue
-        game.clear.push({
-            x: X,
-            y: Y,
-            color: game.map.tileAt(X, Y)
-        })
+        game.clear.push(
+            {
+                x: X,
+                y: Y,
+                color: game.map.tileAt(X, Y)
+            }
+        )
     }
 }
 
@@ -620,7 +666,6 @@ function gameover() {
         (width * (game.map.lengthX + 1)),
         (width * (game.map.lengthY - 1 - 1 / 4))
     )
-    // ctx.fillText("game over", 0, (width * (game.map.lengthY + 2)))
 }
 
 function drawScore() {
@@ -632,5 +677,4 @@ function drawScore() {
         (width * (game.map.lengthX + 1)),
         (width * (game.map.lengthY - 1 / 4))
     )
-    // ctx.fillText(("score:" + game.score), 0, (width * (game.map.lengthY + 1)))
 }
