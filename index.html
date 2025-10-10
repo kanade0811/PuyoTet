@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tetris Dark UI</title>
+    <title>Tetris-like Game</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -12,38 +12,41 @@
         <div class="board">
           <canvas id="screen" width="500" height="750"></canvas>
         </div>
+
         <aside class="sidebar">
           <div class="panel">
             <h3>Next</h3>
             <div class="placeholder">
-              <!-- next block preview -->
-              <canvas id="next" width="250" height="100"></canvas>
+              <canvas id="next" width="200" height="100"></canvas>
             </div>
           </div>
+
           <div class="panel">
             <h3>Hold</h3>
             <div class="placeholder">
-              <!-- hold block preview -->
-              <canvas id="hold" width="250" height="100"></canvas>
+              <canvas id="hold" width="200" height="100"></canvas>
             </div>
           </div>
-          <div class="panel score">
-            <div>
+
+          <div class="score-board">
+            <div class="score">
               <h3>Score</h3>
-              <div class="value" id="domScore">0</div>
+              <div class="value" id="score">0</div>
             </div>
             <div class="help">
-              <div>W: Rotate</div>
-              <div>A / D: Move</div>
-              <div>S: Drop</div>
-              <div>Q: Hold</div>
+              W: Rotate
+              <br />
+              A / D: Move
+              <br />
+              S: Soft drop
+              <br />
+              Q: Hold
             </div>
           </div>
         </aside>
       </div>
     </div>
 
-    <!-- あなたの既存ゲームスクリプト -->
     <script src="game.js"></script>
   </body>
 </html>
