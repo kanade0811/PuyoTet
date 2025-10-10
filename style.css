@@ -1,0 +1,162 @@
+/* ===== 基本配色・フォント ===== */
+:root {
+  --tile-size: 50px;
+  --board-width: calc(var(--tile-size) * 10);
+  --board-height: calc(var(--tile-size) * 15);
+  --sidebar-width: 280px;
+  --gap: 24px;
+
+  --bg-dark: #111;
+  --bg-mid: #1a1a1a;
+  --bg-panel: #222;
+  --text-main: #fff;
+  --text-sub: #bbb;
+  --accent: #00b7ff;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  font-family: "Consolas", "Roboto Mono", monospace;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  overflow: hidden;
+}
+
+/* ===== 全体レイアウト ===== */
+.app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  transition: transform 0.3s ease;
+  transform-origin: top center;
+}
+
+.wrap {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+}
+
+/* ===== ゲーム盤 ===== */
+.board {
+  width: var(--board-width);
+  height: var(--board-height);
+  background: var(--bg-mid);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  /* background-color: #333; */
+  /* width: 100%; */
+  /* height: 100%; */
+  image-rendering: pixelated;
+  border-radius: 8px;
+}
+
+/* ===== サイドバー ===== */
+.sidebar {
+  width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--bg-panel);
+  height: 180px;
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.panel h3 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.placeholder {
+  background: #2a2a2a;
+  border: 1px dashed #444;
+  border-radius: 8px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-size: 13px;
+}
+
+.score {
+  display: flex;
+  height: 100px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.value {
+  font-size: 26px;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.help {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+
+#next-block,
+#hold-block,
+#score-board {
+  background-color: #222;
+  border-radius: 10px;
+  padding: 10px;
+  width: 80%;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+/* ===== スケーリング対応 ===== */
+@media (max-height: 900px) {
+  .app {
+    transform: scale(0.9);
+  }
+}
+@media (max-height: 800px) {
+  .app {
+    transform: scale(0.8);
+  }
+}
+@media (max-height: 700px) {
+  .app {
+    transform: scale(0.7);
+  }
+}
+@media (max-height: 600px) {
+  .app {
+    transform: scale(0.6);
+  }
+}
+
+/* ===== スマホ対応 ===== */
+@media (max-width: 900px) {
+  .wrap {
+    flex-direction: column;
+    align-items: center;
+  }
+  .sidebar {
+    width: 100%;
+    max-width: 340px;
+  }
+}
