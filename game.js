@@ -175,10 +175,16 @@ window.onload = function () {
   setPlayable()
   drawNext()
 
-  // 左右が押されたら瞬時に移動
   document.addEventListener("keydown", (event) => {
-    if (event.code === "KeyA" || event.code === "KeyD") {
-      let move = { KeyA: -1, KeyD: 1 }
+    console.log(event.code)
+    // 左右で移動
+    if (["KeyA", "KeyD", "ArrowLeft", "ArrowRight"].includes(event.code)) {
+      let move = {
+        KeyA: -1,
+        KeyD: 1,
+        ArrowLeft: -1,
+        ArrowRight: 1
+      }
       let dx = move[event.code]
       let nextMove = true
       if (dx === undefined) return
@@ -193,29 +199,27 @@ window.onload = function () {
         game.now.playable.x += dx
       }
     }
+
+    // 回転
+    if (["KeyW", "ArrowUp"].includes(event.code)) {
+      game.type.rotate()
+    }
+    // hold
+    if (["KeyQ", "Space"].includes(event.code)) {
+      hold()
+    }
   })
-  // 下が押されたら落下速度上昇
+
+  // 落下速度上昇
   document.addEventListener("keydown", (event) => {
-    if (event.code === "KeyS") {
+    if (["KeyS", "ArrowDown"].includes(event.code)) {
       setSpeed(1)
     }
   })
-  // 下が離されたら落下速度を元に戻す
+  // 落下速度を戻す
   document.addEventListener("keyup", (event) => {
-    if (event.code === "KeyS") {
+    if (["KeyS", "ArrowDown"].includes(event.code)) {
       setSpeed(0)
-    }
-  })
-  // 上が押されたら回転
-  document.addEventListener("keydown", (event) => {
-    if (event.code === "KeyW") {
-      game.type.rotate()
-    }
-  })
-  // Qが押されたらhold
-  document.addEventListener("keydown", (event) => {
-    if (event.code === "KeyQ") {
-      hold()
     }
   })
 }
