@@ -1,3 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PuyoTet</title>
+    <style>
+/* --- 基本レイアウト --- */
+:root {
+  --tile-size: 50px; /* JS の width と合わせる */
+  --board-width: calc(var(--tile-size) * 10);
+  --board-height: calc(var(--tile-size) * 15);
+  --sidebar-width: 260px;
+  --gap: 24px;
+  --bg: #f6f7fb;
+  --panel-bg: #ffffff;
+  --muted: #6b7280;
+  --accent: #111827;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* 中央に横並びで配置 */
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+.wrap {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+  background: transparent;
+}
+
+/* --- ゲーム盤 (canvas) --- */
+.board {
+  width: var(--board-width);
+  height: var(--board-height);
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  display: block;
+  position: relative;
+}
+
+/* canvas は JS が描画するのでピクセルサイズを明確に指定 */
+#canvas {
+  display: block;
+  width: var(--board-width);
+  height: var(--board-height);
+  image-rendering: pixelated; /* ブロックをシャープに見せる */
+  border-radius: 10px;
+  background: transparent;
+}
+
+/* --- サイドバー --- */
+.sidebar {
+  width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.panel {
+  background: var(--panel-bg);
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel h3 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.placeholder {
+  height: 150px;
+  border-radius: 8px;
+  border: 1px dashed #e6e9ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa4b2;
+  font-weight: 600;
+  font-size: 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent);
+}
+
+.score-board {
+  position: relative;
+  background: var(--panel-bg);
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/*
+.score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  top:0px;
+  left: 50px;
+  height: 10px;
+  width: 100px;
+}
+
+.value {
+  display: flex;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  width:100px;
+  top:0px;
+  left: 10px;
+  align-items: center;
+}
+*/
+
+.score {
+  display: flex;
+  flex-direction: column; /* 縦並び */
+  align-items: flex-start; /* 左寄せ */
+  justify-content: center; /* 縦方向の中央寄せ */
+  gap: 6px; /* 「Score」と数字の間隔 */
+  height: 100%;
+  text-align: left; /* テキストも左寄せ */
+}
+
+.score h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+
+/* キー説明や小さいヘルプ */
+.help {
+  display: flex;
+  position: absolute;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  /* height: 180px; */
+  height: 124px;
+  right: 10%;
+  top:0px;
+  align-items: center;
+}
+
+/* レスポンシブ: 縦幅が狭いときは縦並び */
+@media (max-width: 900px) {
+  .wrap {
+    flex-direction: column;
+    align-items: center;
+  }
+  .sidebar {
+    width: 100%;
+    max-width: 360px;
+  }
+}
+
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="wrap">
+        <div class="board">
+          <canvas id="screen" width="500" height="750"></canvas>
+        </div>
+
+        <aside class="sidebar">
+          <div class="panel">
+            <h3>Next</h3>
+            <div class="placeholder">
+              <canvas id="next" width="200" height="100"></canvas>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Hold</h3>
+            <div class="placeholder">
+              <canvas id="hold" width="200" height="100"></canvas>
+            </div>
+          </div>
+
+          <div class="score-board">
+            <div class="score">
+              <h3>Score</h3>
+              <div class="value" id="score">0</div>
+            </div>
+            <div class="help">
+              W,↑: Rotate
+              <br />
+              A,← / D,→: Move
+              <br />
+              S,↓: Soft drop
+              <br />
+              Q,Space: Hold
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
 // 環境変数
 const fps = 30
 const width = 50
@@ -305,9 +546,13 @@ const ctx = {
   hold: holdId.getContext("2d")
 }
 
+// 1フレームごとに描写する
 function draw() {
   ctx.screen.clearRect(0, 0, 1000, 1000)
+  background()
   drawBlocks()
+  // drawNext()
+  // drawHold()
   playable()
 
   if (putOrNot()) {
@@ -320,13 +565,23 @@ function draw() {
   }
 }
 
+function background() {
+  // 背景色
+  ctx.screen.fillStyle = "white"
+  ctx.screen.fillRect(0, 0, 500, 750)
+
+  // マス目
+  for (let y = 0; y < game.map.lengthY; y++) {
+    for (let x = 0; x < game.map.lengthX; x++) {
+      ctx.screen.strokeStyle = "#d1d5db"
+      ctx.screen.strokeRect(width * x, width * y, width, width)
+    }
+  }
+}
+
 function drawBlocks() {
   for (let y = 0; y < game.map.lengthY; y++) {
     for (let x = 0; x < game.map.lengthX; x++) {
-      // マス目
-      ctx.screen.strokeStyle = "#d1d5db"
-      ctx.screen.strokeRect(width * x, width * y, width, width)
-      // 既に置かれているblock
       let color = game.map.tileColors[game.map.tileAt(x, y)]
       if (color !== null) {
         ctx.screen.fillStyle = color
@@ -643,3 +898,19 @@ const scoreId = document.getElementById("score")
 function drawScore() {
   scoreId.innerHTML = game.score;
 }
+
+/*
+function drawScore() {
+    // スコアの描写
+    ctx.screen.fillStyle = "black"
+    ctx.screen.font = "50px serif"
+    ctx.screen.fillText(
+        ("score:" + game.score),
+        (width * (game.map.lengthX + 1)),
+        (width * (game.map.lengthY - 1 / 4))
+    )
+}
+*/
+    </script>
+  </body>
+</html>
