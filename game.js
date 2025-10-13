@@ -29,8 +29,9 @@ class Map {
       "#fca5a5",
       "#93c5fd",
       "#fde68a",
-      "#86efac",
-      "#d8b4fe",
+      "#86efac"
+      // ,
+      // "#d8b4fe",
     ]
   }
 
@@ -104,7 +105,7 @@ class Type {
     // それぞれのblockに色を割り振る
     for (let k = 0; k < game.type.shapes[game.next.playable.type][0].length; k++) {
       b[k] = {}
-      b[k].color = Math.floor(Math.random() * 5 + 1)
+      b[k].color = Math.floor(Math.random() * (game.map.tileColors.length - 1) + 1)
     }
     // 全てのblockで色が一緒ならblockを作り直し
     if (b[0].color === b[1].color && b[0].color === b[2].color && b[0].color === b[3].color) {
@@ -290,7 +291,7 @@ function setPlayable() {
   game.type.create(game.next.playable.type)
   game.blockCount++
   console.log(game.defaultSpeed)
-  game.defaultSpeed+=0.05
+  game.defaultSpeed += 0.05
 }
 
 function nowBlockX(k) {
@@ -466,7 +467,7 @@ function lineClear(k) {
     for (let m of game.clear) {
       if (m.y === y) m.color = -1
     }
-    game.score += game.map.lengthX
+    game.score += game.map.lengthX ** 2
     createBlocksY(y)
   } else {
     colorClearable(k)
@@ -564,7 +565,7 @@ function colorClear(clearBlocks) {
       }
     }
   }
-  game.score += clearBlocks.length
+  game.score += clearBlocks.length ** 3
   dropBlocks(clearBlocks)
   drawBlocks()
   // 落下したblockに対して、異なるx座標の大きいyからcolorClearする
