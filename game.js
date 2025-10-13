@@ -153,6 +153,7 @@ class Game {
     this.defaultSpeed = 1
     this.incraseSpeed = 8
     this.clear = []
+    this.blockCount = 0
   }
 }
 let game
@@ -176,7 +177,6 @@ window.onload = function () {
   drawNext()
 
   document.addEventListener("keydown", (event) => {
-    console.log(event.code)
     // 左右で移動
     if (["KeyA", "KeyD", "ArrowLeft", "ArrowRight"].includes(event.code)) {
       let move = {
@@ -225,7 +225,11 @@ window.onload = function () {
 }
 
 function setSpeed(keydown) {
-  game.speed = game.defaultSpeed + game.incraseSpeed * keydown
+  if (keydown === 0) {
+    game.speed = game.defaultSpeed
+  } else if (keydown === 1) {
+    game.speed = (game.defaultSpeed + game.incraseSpeed) * keydown
+  }
 }
 
 function hold() {
@@ -284,6 +288,9 @@ function setPlayable() {
     }
   }
   game.type.create(game.next.playable.type)
+  game.blockCount++
+  console.log(game.defaultSpeed)
+  game.defaultSpeed+=0.05
 }
 
 function nowBlockX(k) {
@@ -355,7 +362,6 @@ function drawNext() {
   }
 }
 
-// koko
 function drawHold() {
   if (game.hold === null) return
   ctx.hold.clearRect(0, 0, 200, 100)
