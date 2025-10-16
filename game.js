@@ -5,23 +5,7 @@ const width = 50
 // 盤面をここに保存
 class Map {
   constructor() {
-    this.tiles = [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ]
+    this.tiles = null;
     this.lengthX = 10
     this.lengthY = 15
     this.tileColors = [
@@ -47,6 +31,24 @@ class Map {
     return this.tiles[this.tileNumber(x, y)]
   }
 }
+
+const map = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+]
 
 class Type {
   constructor() {
@@ -148,21 +150,26 @@ class Game {
     this.now = null
     this.next = null
     this.hold = null
-    this.score = 0
-    this.gameInterval = setInterval(draw, 1000 / fps)
+    this.score = null
+    this.gameInterval = null
     this.speed = 1
     this.defaultSpeed = 1
     this.incraseSpeed = 8
     this.clear = []
     this.blockCount = 0
+    this.topScore = 0
   }
 }
 let game
 
-window.onload = function () {
+function setGame() {
+  game.score = 0
+  scoreId.innerHTML = game.score;
+  game.map.tiles = map.slice()
+  game.hold = null
+  ctx.hold.clearRect(0, 0, 200, 100)
+  game.gameInterval = setInterval(draw, 1000 / fps)
 
-  game = new Game()
-  // ゲーム開始時に上真ん中にランダムなblockを配置
   game.next = {
     playBlocks: [],
     playable: {
@@ -176,6 +183,13 @@ window.onload = function () {
   game.now = game.next
   setPlayable()
   drawNext()
+
+}
+
+window.onload = function () {
+
+  game = new Game()
+  setGame();
 
   document.addEventListener("keydown", (event) => {
     // 左右で移動
@@ -223,7 +237,13 @@ window.onload = function () {
       setSpeed(0)
     }
   })
+
+  document.getElementById("retry-btn").addEventListener("click", () => {
+    overlay.classList.remove("show");
+    setGame(); // ページ再読み込みでリセット（簡易版）
+  });
 }
+
 
 function setSpeed(keydown) {
   if (keydown === 0) {
@@ -290,7 +310,6 @@ function setPlayable() {
   }
   game.type.create(game.next.playable.type)
   game.blockCount++
-  console.log(game.defaultSpeed)
   game.defaultSpeed += 0.05
 }
 
@@ -636,14 +655,18 @@ function isContinue() {
   }
 }
 
+const overlay = document.getElementById("gameover");
+
 function gameover() {
-  ctx.screen.fillStyle = "black"
-  ctx.screen.font = "50px serif"
-  ctx.screen.fillText(
-    "game over",
-    (width * (game.map.lengthX + 1)),
-    (width * (game.map.lengthY - 1 - 1 / 4))
-  )
+  const scoreElem = document.getElementById("gameover-score");
+  const topScoreElem = document.getElementById("gameover-topScore");
+
+  if (game.score > game.topScore) {
+    game.topScore = game.score
+  }
+  scoreElem.textContent = `Score: ${game.score}`;
+  topScoreElem.textContent = `TopScore: ${game.topScore}`;
+  overlay.classList.add("show");
 }
 
 const scoreId = document.getElementById("score")
